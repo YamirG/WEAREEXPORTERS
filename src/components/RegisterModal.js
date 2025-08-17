@@ -126,7 +126,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                     <li>Listado completo de compradores</li>
                     <li>⭐ Gestión para Prospección Masiva de Compradores</li>
                     <li>Capacitación/Curso (De Cero a Exportador)</li>
-                    <li>Servicio de Asesoría (1 hora/semana)</li>
+                    <li>Servicio de Asesoría (Humana: 1 hora/semana + IA 24/7)</li>
                     <li>Alerta de oportunidades comerciales</li>
                     <li>Actualizaciones Mensuales</li>
                     <li>Soporte por email</li>
