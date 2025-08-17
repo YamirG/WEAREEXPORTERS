@@ -8,7 +8,7 @@ const FooterSection = () => {
           <div>
             <h3 className="text-xl font-bold mb-4">WeAreExporters</h3>
             <p className="text-gray-400 mb-4">
-              Conectando empresas con oportunidades globales a través de datos precisos y contactos verificados.
+              Llevamos productos a mercados globales a través de nuestros servicios.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
@@ -28,8 +28,8 @@ const FooterSection = () => {
             <ul className="space-y-2">
               <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Búsqueda de mercados</a></li>
               <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Requisitos de exportación</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Directorio de compradores</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Análisis de mercado</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Requisitos de Importación</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Ventas Internacional</a></li>
               <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Asesoría especializada</a></li>
             </ul>
           </div>
@@ -55,8 +55,8 @@ const FooterSection = () => {
                   </svg>
                 </span>
                 <span className="text-gray-400">
-                  Av. Comercio  <br />
-                  Ciudad de México, 06500
+                  Ciudad de México <br />
+                  México
                 </span>
               </li>
               <li className="flex items-center">
@@ -65,7 +65,7 @@ const FooterSection = () => {
                     <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                   </svg>
                 </span>
-                <span className="text-gray-400">Link</span>
+                <span className="text-gray-400">+52 5574169768</span>
               </li>
               <li className="flex items-center">
                 <span className="text-gray-400 mr-2">
@@ -74,7 +74,7 @@ const FooterSection = () => {
                     <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                   </svg>
                 </span>
-                <span className="text-gray-400">info@somosexportadores.com</span>
+                <span className="text-gray-400">info@weareexporters.com</span>
               </li>
             </ul>
           </div>
