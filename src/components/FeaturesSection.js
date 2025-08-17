@@ -17,8 +17,8 @@ const FeaturesSection = () => {
       description: 'Con tan solo un clic, genera prospectos calificados que ya compran y buscan un producto como el tuyo en mercados internacionales.',
       icon: `<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path><circle cx='12' cy='7' r='4'></circle></svg>`
     },
-    {title: 'Hay un País Buscando tu Producto',
-      description: 'Identificamos la oferta y la demanda, localizamos el país que busca tu producto al instante en tan solo un clic.',
+    {title: 'Hecho para todo LATAM',
+      description: 'Sin importar el país de origen, ya sea que estes en México o en cualquier otro país, puedes usar esta plataforma... Con tan solo un clic, localizamos el país que busca tu producto y te entregamos potenciales compradores internacionales',
       icon: `<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'></circle><path d='M12 1v6m0 6v6m11-7h-6m-6 0H1m5.64-7.64l4.24 4.24m6.36 6.36l4.24 4.24M6.64 17.64l4.24-4.24m6.36-6.36l4.24-4.24'></path></svg>`
     },
   
