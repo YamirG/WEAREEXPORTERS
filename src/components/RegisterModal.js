@@ -18,8 +18,8 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   const [agreeTerms, setAgreeTerms] = useState(false);
 
   // Estados de suscripción
-  const [paid, setPaid] = useState(false);               // true cuando se crea/aprueba la suscripción
-  const [subscriptionId, setSubscriptionId] = useState(''); // lo devuelve PayPal en onApprove
+  const [paid, setPaid] = useState(false);               
+  const [subscriptionId, setSubscriptionId] = useState(''); 
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -34,9 +34,6 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 1) Primero el usuario APRUEBA la SUSCRIPCIÓN en PayPal -> guardamos subscriptionId en estado y habilitamos el submit
-  // 2) Luego el usuario envía el formulario -> creamos cuenta + insert en tabla users con paypal_subscription_id, paypal_status='pending'
-  //    El webhook de PayPal (en Supabase) actualizará paypal_status a 'active' y pondrá is_premium=true.
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!agreeTerms) {
@@ -50,7 +47,6 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
 
     setIsLoading(true);
     try {
-      // Alta en Auth
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -60,7 +56,6 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
       const userId = authData?.user?.id || authData?.session?.user?.id;
       if (!userId) throw new Error('No se pudo obtener el ID del usuario después del registro.');
 
-      // Inserta en tabla users (si ya existe fila por triggers, puedes usar upsert)
       const { error: insertError } = await supabase
         .from('users')
         .insert([{
@@ -69,17 +64,12 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
           email: formData.email,
           company: formData.company,
           industry: formData.industry,
-          // Deja is_premium false; el webhook de PayPal lo pondrá en true al ACTIVAR
           is_premium: false,
           paypal_subscription_id: subscriptionId,
-          paypal_status: 'pending', // lo actualizará el webhook a 'active'
+          paypal_status: 'pending',
           created_at: new Date()
         }]);
-      if (insertError) {
-        // Si tuvieras una fila previa, puedes hacer un update en su lugar:
-        // await supabase.from('users').update({ paypal_subscription_id: subscriptionId, paypal_status: 'pending' }).eq('id', userId);
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
       alert('Cuenta creada. Tu suscripción se activará en unos segundos.');
       onClose();
@@ -124,6 +114,24 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 <h3 className="text-xl md:text-2xl leading-6 font-bold text-gray-900 mb-6">
                   Crear una cuenta
                 </h3>
+
+                {/* Texto agregado */}
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-gray-700">
+                  <p className="mb-2">
+                    Desbloquea el potencial de tu producto. Al registrarte te estás suscribiendo a nuestro <strong>Plan Premium</strong>.
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                    <li>Consultas Ilimitadas</li>
+                    <li>Búsqueda Ilimitada de mercados</li>
+                    <li>Listado completo de compradores</li>
+                    <li>⭐ Gestión para Prospección Masiva de Compradores</li>
+                    <li>Capacitación/Curso (De Cero a Exportador)</li>
+                    <li>Servicio de Asesoría (1 hora/semana)</li>
+                    <li>Alerta de oportunidades comerciales</li>
+                    <li>Actualizaciones Mensuales</li>
+                    <li>Soporte por email</li>
+                  </ul>
+                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <input
@@ -189,19 +197,17 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                     </label>
                   </div>
 
-                  {/* PayPal Subscriptions */}
                   {!paid ? (
                     <PayPalScriptProvider
                       options={{
                         'client-id': PAYPAL_CLIENT_ID,
                         vault: true,
-                        intent: 'subscription', // clave para suscripciones
+                        intent: 'subscription',
                       }}
                     >
                       <PayPalButtons
                         style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'subscribe' }}
                         createSubscription={(data, actions) => {
-                          // Crea la suscripción con tu plan LIVE
                           return actions.subscription.create({
                             plan_id: PAYPAL_PLAN_ID,
                           });
