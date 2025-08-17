@@ -14,7 +14,7 @@ const PricingSection = ({ onOpenRegister }) => {
         'Listado completo de compradores',
         'Gestión para Prospección Masiva de Compradores',
         'Capacitación/Curso (De Cero a Exportador)',
-        'Servicio de Asesoría (1 hora/semana)',
+        'Servicio de Asesoría con IA + Expertos Humanos',,
         'Alerta de oportunidades comerciales',
         'Actualizaciones Mensuales',
         'Soporte por email'
