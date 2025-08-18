@@ -14,7 +14,7 @@ const FeaturesSection = () => {
     },
     {
       title: 'No es un Directorio de Compradores',
-      description: 'Con tan solo un clic, genera análisis, requisitos aduanales/gubernamentales y prospección en mercados internacionales.',
+      description: 'Con tan solo un clic, activa una base de datos que este llenandose de prospectos activos y calificados en el país objetivo, lo unico que harás es cerrar ventas directamente sin intermediarios',
       icon: `<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path><circle cx='12' cy='7' r='4'></circle></svg>`
     },
     {title: 'Hecho para todo LATAM',
