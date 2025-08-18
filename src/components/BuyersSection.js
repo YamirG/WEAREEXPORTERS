@@ -546,7 +546,11 @@ const BuyersSection = ({ onLimitReached }) => {
                       </div>
                     ))}
                   </div>
-                  
+                         <div className="bg-green-50 p-4 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      <span className="font-medium">Nota importante:</span> Para conocer más detalles accede al plan premium, dónde podrás obtener prospectos masivos en el pais meta.
+                    </p>
+                  </div>
                   <div className="mt-6 text-center">
                     <p className="text-sm text-gray-500 mb-3">¿Quieres acceder a la lista completa de importadores con datos de contacto verificados?</p>
                     <button className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
