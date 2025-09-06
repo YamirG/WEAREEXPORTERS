@@ -1,6 +1,8 @@
+// src/App.js
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 import NavbarHeader from './components/NavbarHeader';
 import HeroSection from './components/HeroSection';
@@ -39,9 +41,9 @@ const MainContent = ({
 
   return (
     <div className="min-h-screen bg-white">
-      <NavbarHeader 
-        onLoginClick={onLoginClick} 
-        onRegisterClick={onRegisterClick} 
+      <NavbarHeader
+        onLoginClick={onLoginClick}
+        onRegisterClick={onRegisterClick}
       />
 
       <main>
@@ -50,20 +52,20 @@ const MainContent = ({
         <RequirementsSection onLimitReached={handleLimitReached} />
         <BuyersSection onLimitReached={handleLimitReached} />
         <FeaturesSection />
-        {/* 🔹 Ahora este botón abre directamente el RegisterModal */}
+        {/* 🔹 Este botón abre directamente el RegisterModal */}
         <PricingSection onOpenRegister={onRegisterClick} />
       </main>
 
       <FooterSection />
 
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
+      <LoginModal
+        isOpen={isLoginModalOpen}
         onClose={handleCloseModals}
         onSwitchToRegister={onSwitchToRegister}
       />
 
-      <RegisterModal 
-        isOpen={isRegisterModalOpen} 
+      <RegisterModal
+        isOpen={isRegisterModalOpen}
         onClose={handleCloseModals}
         onSwitchToLogin={onSwitchToLogin}
       />
@@ -127,32 +129,77 @@ const App = () => {
     }
   };
 
+  // ✅ reCAPTCHA v3 Site Key desde el entorno (Netlify/Local)
+  const RECAPTCHA_V3_SITE_KEY =
+    process.env.REACT_APP_RECAPTCHA_V3_SITE_KEY || '';
+
+  // Simple sanity check: evita montar el provider con una key vacía/incorrecta
+  const hasValidRecaptchaKey = typeof RECAPTCHA_V3_SITE_KEY === 'string' && RECAPTCHA_V3_SITE_KEY.length > 30;
+
+  if (!hasValidRecaptchaKey) {
+    console.warn(
+      '[reCAPTCHA v3] Site key ausente o inválida. ' +
+      'Define REACT_APP_RECAPTCHA_V3_SITE_KEY en tu entorno (Netlify > Environment variables) ' +
+      'incluyendo los dominios permitidos: weareexporters.com, *.netlify.app y localhost.'
+    );
+  }
+
   return (
-    <PayPalScriptProvider options={{ "client-id": "AWuAA_Bje1P9Rj61MqgNYfUpaO56weL_jtR7or-usXF4sA5PTn8dciRomlcvhmoAgcDZvFbkXajyaqLq" }}>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <MainContent
-              onLoginClick={handleLoginClick}
-              onRegisterClick={handleRegisterClick}
-              onSwitchToLogin={handleSwitchToLogin}
-              onSwitchToRegister={handleSwitchToRegister}
-              isLoginModalOpen={isLoginModalOpen}
-              isRegisterModalOpen={isRegisterModalOpen}
-              isSubscriptionModalOpen={isSubscriptionModalOpen}
-              handleCloseModals={handleCloseModals}
-              handleSelectPlan={handleSelectPlan}
+    <PayPalScriptProvider
+      options={{
+        'client-id': 'AVWRzrFvVKdXb9HhxI5W1eK6uyfH8ECX6JwF4DLkadrrc2WlQm7uvvxmnbiup6ir_LbbZZkLk8wLkP3p',
+      }}
+    >
+      {hasValidRecaptchaKey ? (
+        <GoogleReCaptchaProvider
+          reCaptchaKey={RECAPTCHA_V3_SITE_KEY}
+          language="es"
+          scriptProps={{ async: true, defer: true }}
+        >
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <MainContent
+                  onLoginClick={handleLoginClick}
+                  onRegisterClick={handleRegisterClick}
+                  onSwitchToLogin={handleSwitchToLogin}
+                  onSwitchToRegister={handleSwitchToRegister}
+                  isLoginModalOpen={isLoginModalOpen}
+                  isRegisterModalOpen={isRegisterModalOpen}
+                  isSubscriptionModalOpen={isSubscriptionModalOpen}
+                  handleCloseModals={handleCloseModals}
+                  handleSelectPlan={handleSelectPlan}
+                />
+              }
             />
-          }
-        />
-        <Route path="/premiumdashboard" element={<PremiumDashboard />} />
-      </Routes>
+            <Route path="/premiumdashboard" element={<PremiumDashboard />} />
+          </Routes>
+        </GoogleReCaptchaProvider>
+      ) : (
+        // Fallback sin provider (la UI funciona y tu RegisterModal mostrará error si intenta ejecutar el captcha)
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <MainContent
+                onLoginClick={handleLoginClick}
+                onRegisterClick={handleRegisterClick}
+                onSwitchToLogin={handleSwitchToLogin}
+                onSwitchToRegister={handleSwitchToRegister}
+                isLoginModalOpen={isLoginModalOpen}
+                isRegisterModalOpen={isRegisterModalOpen}
+                isSubscriptionModalOpen={isSubscriptionModalOpen}
+                handleCloseModals={handleCloseModals}
+                handleSelectPlan={handleSelectPlan}
+              />
+            }
+          />
+          <Route path="/premiumdashboard" element={<PremiumDashboard />} />
+        </Routes>
+      )}
     </PayPalScriptProvider>
   );
 };
 
 export default App;
-
-
-
