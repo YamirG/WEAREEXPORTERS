@@ -14,7 +14,7 @@ const PAYPAL_PLAN_ID =
   'P-35A37554VB605731GNC3ZBOA';
 
 const VERIFY_URL =
-  process.env.REACT_APP_RECAPTCHA_VERIFY_URL || ''; // GAS / Edge Function
+  process.env.REACT_APP_RECAPTCHA_VERIFY_URL || 'https://script.google.com/macros/s/AKfycbwO0yKOgj6cDwSEzNFF68XB-82_h_zEo7UZs734OA8kqdT4CFkHX1auSZUaJ4k4tIc5/exec'; // GAS / Edge Function
 
 async function verifyRecaptchaTokenV3(token) {
   if (!VERIFY_URL) return { ok: true, skipped: true };
