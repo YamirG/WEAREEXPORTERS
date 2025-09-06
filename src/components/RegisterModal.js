@@ -13,15 +13,17 @@ const PAYPAL_PLAN_ID =
   process.env.REACT_APP_PAYPAL_PLAN_ID ||
   'P-35A37554VB605731GNC3ZBOA';
 
-const VERIFY_URL =
-  process.env.REACT_APP_RECAPTCHA_VERIFY_URL || 'https://script.google.com/macros/s/AKfycbwO0yKOgj6cDwSEzNFF68XB-82_h_zEo7UZs734OA8kqdT4CFkHX1auSZUaJ4k4tIc5/exec'; // GAS / Edge Function
+// ✅ URL del backend que verifica el token (Apps Script o Edge Function)
+const RECAPTCHA_VERIFY_URL =
+  process.env.REACT_APP_RECAPTCHA_VERIFY_URL || 'https://script.google.com/macros/s/AKfycbwO0yKOgj6cDwSEzNFF68XB-82_h_zEo7UZs734OA8kqdT4CFkHX1auSZUaJ4k4tIc5/exec';
 
 async function verifyRecaptchaTokenV3(token) {
-  if (!VERIFY_URL) return { ok: true, skipped: true };
+  // Si no configuraste backend todavía, no bloquees el registro:
+  if (!RECAPTCHA_VERIFY_URL) return { ok: true, skipped: true };
   try {
-    const res = await fetch(VERIFY_URL, {
+    const res = await fetch(RECAPTCHA_VERIFY_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ token, action: 'register' }),
     });
     const data = await res.json().catch(() => ({}));
@@ -73,7 +75,9 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
       if (!agreeTerms) throw new Error('Debes aceptar los términos y privacidad.');
       if (!paid || !subscriptionId) throw new Error('Completa la suscripción con PayPal antes de crear la cuenta.');
 
-      if (!executeRecaptcha) throw new Error('reCAPTCHA no está listo. Refresca la página e intenta de nuevo.');
+      if (!executeRecaptcha) {
+        throw new Error('reCAPTCHA no está listo. Refresca la página e intenta de nuevo.');
+      }
 
       // 1) Obtener token v3
       const token = await executeRecaptcha('register');
@@ -81,7 +85,6 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
 
       // 2) Verificar token en tu backend (GAS/Edge)
       const check = await verifyRecaptchaTokenV3(token);
-      console.log('reCAPTCHA check:', check);
       if (!check?.ok) throw new Error('Validación reCAPTCHA fallida.');
       if (typeof check.score === 'number' && check.score < 0.5) {
         throw new Error('Detección de actividad inusual. Intenta nuevamente.');
@@ -163,7 +166,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
 
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-gray-700">
                   <p className="mb-2">
-                     Al registrarte a nuestro Plan Premium obtienes <strong>7 días de Prueba Gratis</strong>.
+                    Obtén <strong>7 días de Prueba Gratis</strong> al registrarte a nuestro Plan Premium.
                   </p>
                   <ul className="list-disc pl-5 space-y-1 text-gray-700">
                     <li>Consultas Ilimitadas</li>
@@ -175,7 +178,6 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                     <li>Alertas de oportunidades comerciales</li>
                     <li>Actualizaciones Mensuales</li>
                     <li>Soporte por email</li>
-                Desbloquea el potencial de tu Producto. Pruebalo por 7 días Gratis al registrarte.
                   </ul>
                 </div>
 
@@ -199,9 +201,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                   </div>
 
                   {!paid ? (
-                    <PayPalScriptProvider
-                      options={{ 'client-id': PAYPAL_CLIENT_ID, vault: true, intent: 'subscription' }}
-                    >
+                    <PayPalScriptProvider options={{ 'client-id': PAYPAL_CLIENT_ID, vault: true, intent: 'subscription' }}>
                       <PayPalButtons
                         style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'subscribe' }}
                         createSubscription={(data, actions) => {
