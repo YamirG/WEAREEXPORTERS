@@ -7,6 +7,7 @@ const PricingSection = ({ onOpenRegister }) => {
       name: 'Premium',
       price: '$49',
       period: 'mes',
+      
       description: 'Para empresas comprometidas con la expansión internacional y la búsqueda activa de nuevos mercados.',
       features: [
         'Consultas Ilimitadas',
@@ -14,12 +15,12 @@ const PricingSection = ({ onOpenRegister }) => {
         'Listado completo de compradores',
         'Gestión para Prospección Masiva de Compradores',
         'Capacitación/Curso (De Cero a Exportador)',
-        'Servicio de Asesoría con IA + Expertos Humanos',,
+        'Servicio de Asesoría con IA + Expertos Humanos',
         'Alerta de oportunidades comerciales',
         'Actualizaciones Mensuales',
         'Soporte por email'
       ],
-      cta: 'Obtener Premium',
+      cta: 'Obtén 7 días de Prueba Gratis. Plan Premium',
       highlighted: true
     }
   ];
