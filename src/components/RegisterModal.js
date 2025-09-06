@@ -11,7 +11,7 @@ const PAYPAL_CLIENT_ID =
 
 const PAYPAL_PLAN_ID =
   process.env.REACT_APP_PAYPAL_PLAN_ID ||
-  'P-9JM931674E416574ENBSV54Q';
+  'P-35A37554VB605731GNC3ZBOA';
 
 const VERIFY_URL =
   process.env.REACT_APP_RECAPTCHA_VERIFY_URL || ''; // GAS / Edge Function
@@ -163,7 +163,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
 
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-gray-700">
                   <p className="mb-2">
-                    Desbloquea el potencial de tu producto. Al registrarte te estás suscribiendo a nuestro <strong>Plan Premium</strong>.
+                     Al registrarte a nuestro Plan Premium obtienes <strong>7 días de Prueba Gratis</strong>.
                   </p>
                   <ul className="list-disc pl-5 space-y-1 text-gray-700">
                     <li>Consultas Ilimitadas</li>
@@ -175,6 +175,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                     <li>Alertas de oportunidades comerciales</li>
                     <li>Actualizaciones Mensuales</li>
                     <li>Soporte por email</li>
+                Desbloquea el potencial de tu Producto. Pruebalo por 7 días Gratis al registrarte.
                   </ul>
                 </div>
 
