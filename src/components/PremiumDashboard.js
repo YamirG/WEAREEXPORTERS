@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 
 // 📌 Importar las pestañas
 import ConsultasTab from './tabs/ConsultasTab';
@@ -8,13 +8,16 @@ import CapacitacionTab from './tabs/CapacitacionTab';
 import AsesoriaTab from './tabs/AsesoriaTab';
 import ActualizacionesTab from './tabs/ActualizacionesTab';
 import SoporteTab from './tabs/SoporteTab';
+import OnboardingTab from './tabs/OnboardingTab';
 
 const PremiumDashboard = () => {
-  const [activeTab, setActiveTab] = useState('consultas');
+  // ⬇️ Arrancamos en "inicio" para guiar al usuario
+  const [activeTab, setActiveTab] = useState('inicio');
   const [walletBalance, setWalletBalance] = useState(0);
-    // 👇 Estado para la pestaña de Capacitación (evita undefined)
+
+  // 👇 Estado para la pestaña de Capacitación (evita undefined)
   const [courseVideos, setCourseVideos] = useState([
-    // Ejemplo opcional de arranque (puedes dejarlo vacío []):
+    // Ejemplo opcional de arranque:
     // { id: 'ex1', title: 'De cero a exportador - Intro', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }
   ]);
   const [newVideoTitle, setNewVideoTitle] = useState('');
@@ -25,26 +28,20 @@ const PremiumDashboard = () => {
     const url = raw.trim();
     if (!url) return '';
 
-    // youtu.be/VIDEOID -> embed/VIDEOID
     const youtuMatch = url.match(/^https?:\/\/(www\.)?youtu\.be\/([A-Za-z0-9_-]{6,})/i);
     if (youtuMatch) return `https://www.youtube.com/embed/${youtuMatch[2]}`;
 
-    // youtube.com/watch?v=VIDEOID -> embed/VIDEOID
     const watchMatch = url.match(/[?&]v=([A-Za-z0-9_-]{6,})/i);
     if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`;
 
-    // Si ya viene en /embed/ lo dejamos igual
     if (/youtube\.com\/embed\//i.test(url)) return url;
 
-    // Si no es YouTube, lo dejamos tal cual (por si usas otro proveedor que soporte iframes)
-    
     return url;
   };
 
   const handleAddVideo = () => {
     const title = newVideoTitle.trim();
     const url = toEmbedUrl(newVideoUrl);
-
     if (!title || !url) return;
 
     const newItem = {
@@ -57,6 +54,11 @@ const PremiumDashboard = () => {
     setNewVideoTitle('');
     setNewVideoUrl('');
   };
+
+  // 👇 Permite que OnboardingTab cambie de pestaña (por ejemplo, a "consultas", "prospeccion", etc.)
+  const handleGoTo = useCallback((tabKey) => {
+    setActiveTab(tabKey);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -94,6 +96,18 @@ const PremiumDashboard = () => {
       <nav className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <ul className="flex flex-wrap justify-center md:justify-start space-x-2 md:space-x-6">
+            <li>
+              <button
+                onClick={() => setActiveTab('inicio')}
+                className={`px-3 py-1 md:px-4 md:py-2 rounded-lg font-medium text-sm md:text-base ${
+                  activeTab === 'inicio'
+                    ? 'bg-green-100 text-green-700'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Inicio
+              </button>
+            </li>
             <li>
               <button
                 onClick={() => setActiveTab('consultas')}
@@ -184,16 +198,53 @@ const PremiumDashboard = () => {
 
       {/* CONTENIDO */}
       <div className="container mx-auto p-4 md:p-6">
+        {activeTab === 'inicio' && (
+          <OnboardingTab
+            // Si tienes el email del usuario, pásalo aquí:
+            // userEmail={currentUserEmail}
+            onGoTo={handleGoTo}
+            routes={{
+              pais: 'consultas',          // 1. Detección de mercados
+              requisitos: 'consultas', // 2. Normativa / cambios (tu Briefing IA)
+              rentabilidad: 'consultas',  // 3. Rentabilidad / Top compradores (o tu tab de compradores si existe)
+              prospeccion: 'prospeccion', // 4. Prospección masiva
+              tramite: 'asesoria',        // 5. Asesoría / primer trámite
+            }}
+          />
+        )}
+
         {activeTab === 'consultas' && <ConsultasTab />}
+
         {activeTab === 'prospeccion' && (
-          <ProspeccionTab walletBalance={walletBalance} setWalletBalance={setWalletBalance} />
+          <ProspeccionTab
+            walletBalance={walletBalance}
+            setWalletBalance={setWalletBalance}
+          />
         )}
+
         {activeTab === 'cartera' && (
-          <CarteraTab walletBalance={walletBalance} setWalletBalance={setWalletBalance} />
+          <CarteraTab
+            walletBalance={walletBalance}
+            setWalletBalance={setWalletBalance}
+          />
         )}
-        {activeTab === 'capacitacion' && <CapacitacionTab />}
+
+        {activeTab === 'capacitacion' && (
+          <CapacitacionTab
+            // Si quieres renderizar los videos aquí, puedes pasar props:
+            // videos={courseVideos}
+            // onAddVideo={handleAddVideo}
+            // newVideoTitle={newVideoTitle}
+            // newVideoUrl={newVideoUrl}
+            // setNewVideoTitle={setNewVideoTitle}
+            // setNewVideoUrl={setNewVideoUrl}
+          />
+        )}
+
         {activeTab === 'asesoria' && <AsesoriaTab />}
+
         {activeTab === 'actualizaciones' && <ActualizacionesTab />}
+
         {activeTab === 'soporte' && <SoporteTab />}
       </div>
     </div>
