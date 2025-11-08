@@ -170,14 +170,14 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                   </p>
                   <ul className="list-disc pl-5 space-y-1 text-gray-700">
                     <li>Consultas Ilimitadas</li>
-                    <li>Búsqueda Ilimitada de mercados</li>
-                    <li>Listado completo de compradores</li>
-                    <li>⭐ Gestión para Prospección Masiva de Compradores</li>
-                    <li>Capacitación/Curso (De Cero a Exportador)</li>
-                    <li>Servicio de Asesoría (Humana 1h/sem + IA 24/7)</li>
-                    <li>Alertas de oportunidades comerciales</li>
-                    <li>Actualizaciones Mensuales</li>
-                    <li>Soporte por email</li>
+                    <li>Encuentra clientes y distribuidores reales en mercados internacionales</li>
+                    <li>Accede a guías claras sobre trámites y requisitos de exportación</li>
+                    <li>Valida demanda con estudios de mercado automatizados</li>
+                    <li>Lanza campañas de prospección con prospectos verificados (1 al mes incluido)</li>
+                    <li>Resuelve dudas al instante con nuestro Chat IA experto</li>
+                    <li>Recibe asesorías por videollamada con especialistas en comercio exterior</li>
+                    <li>Capacítate con talleres y cursos continuos para exportadores</li>
+                    <li>Mantente al día con noticias y alertas sobre oportunidades globales</li>
                   </ul>
                 </div>
 
