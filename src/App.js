@@ -11,6 +11,7 @@ import RequirementsSection from './components/RequirementsSection';
 import BuyersSection from './components/BuyersSection';
 import FeaturesSection from './components/FeaturesSection';
 import PricingSection from './components/PricingSection';
+import FaqSection from './components/FaqSection'; // ajusta la ruta
 import FooterSection from './components/FooterSection';
 import LoginModal from './components/LoginModal';
 import RegisterModal from './components/RegisterModal';
@@ -55,7 +56,7 @@ const MainContent = ({
         {/* 🔹 Este botón abre directamente el RegisterModal */}
         <PricingSection onOpenRegister={onRegisterClick} />
       </main>
-
+      <FaqSection /> 
       <FooterSection />
 
       <LoginModal
