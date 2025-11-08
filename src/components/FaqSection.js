@@ -1,20 +1,63 @@
-import React from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 /**
- * FaqSection.js
- * Sección de Preguntas Frecuentes para colocarse después de PricingSection.js
- * - Sin dependencias adicionales
- * - Accesible: usa <details>/<summary> para acordeones nativos
- * - Incluye una tabla comparativa responsive
- * - Colores adaptados a la paleta verde de WeAreExporters
+ * FaqSection.js (Responsive: móvil y escritorio)
+ * - Mantiene estructura e información original
+ * - Acordeones nativos <details>/<summary>
+ * - Comparativa: tabla en desktop / tarjetas en mobile
+ * - Paleta verde WeAreExporters
  */
 export default function FaqSection() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const styles = useMemo(() => getStyles(isMobile), [isMobile]);
+
+  // Filas para la tabla / tarjetas
+  const rows = [
+    {
+      servicio: 'We Are Exporters (Plan Premium)',
+      costo: '💲 Accesible desde $49 USD',
+      prospectos: '✅ Sí',
+      asesoria: '✅ Sí',
+      tramites: '✅ Sí',
+    },
+    {
+      servicio: 'Consultoría especializada en exportaciones',
+      costo: '$300–$1,500 USD',
+      prospectos: '❌ No',
+      asesoria: '✅ Sí',
+      tramites: '✅ Sí',
+    },
+    {
+      servicio: 'Organismos de promoción (tipo ProMéxico)',
+      costo: 'Gratuito o altos costos ocultos hasta 3000usd',
+      prospectos: '❌ No (orientación general)',
+      asesoria: '❌ Limitado',
+      tramites: '✅ Parcial (según programas)',
+    },
+    {
+      servicio: 'Broker/intermediarios de exportación',
+      costo: 'Cobra %+fee 1500usd por operación',
+      prospectos: '✅ Sí (con comisión)',
+      asesoria: '❌ No',
+      tramites: '❌ No',
+    },
+  ];
+
   return (
     <section id="faq" style={styles.section} aria-labelledby="faq-heading">
       <div style={styles.container}>
         <h2 id="faq-heading" style={styles.title}>PREGUNTAS FRECUENTES</h2>
 
         <div style={styles.grid}>
+          {/* Columna: FAQ */}
           <div style={styles.col}>
             <details style={styles.item} open>
               <summary style={styles.summary}>❓ ¿We Are Exporters solo ofrece información o realizan gestión?</summary>
@@ -114,50 +157,63 @@ export default function FaqSection() {
             </details>
           </div>
 
+          {/* Columna: Comparativa */}
           <div style={styles.col}>
             <div style={styles.tableWrap} role="region" aria-label="Comparativa de opciones" tabIndex={0}>
               <div style={styles.tableTitle}>Comparativa con otras opciones del mercado</div>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>Servicio</th>
-                    <th style={styles.th}>Costo Aproximado Mensual</th>
-                    <th style={styles.th}>¿Incluye Prospectos Automáticos?</th>
-                    <th style={styles.th}>¿Incluye Asesoría y Soporte?</th>
-                    <th style={styles.th}>¿Incluye Tramitología + Requisitos?</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style={styles.td}><strong>We Are Exporters (Plan Premium)</strong></td>
-                    <td style={styles.td}>💲 Accesible desde $49 USD</td>
-                    <td style={styles.td}>✅ Sí</td>
-                    <td style={styles.td}>✅ Sí</td>
-                    <td style={styles.td}>✅ Sí</td>
-                  </tr>
-                  <tr>
-                    <td style={styles.td}>Consultoría especializada en exportaciones</td>
-                    <td style={styles.td}>$300–$1,500 USD</td>
-                    <td style={styles.td}>❌ No</td>
-                    <td style={styles.td}>✅ Sí</td>
-                    <td style={styles.td}>✅ Sí</td>
-                  </tr>
-                  <tr>
-                    <td style={styles.td}>Organismos de promoción (tipo ProMéxico)</td>
-                    <td style={styles.td}>Gratuito o altos costos ocultos hasta 3000usd</td>
-                    <td style={styles.td}>❌ No (orientación general)</td>
-                    <td style={styles.td}>❌ Limitado</td>
-                    <td style={styles.td}>✅ Parcial (según programas)</td>
-                  </tr>
-                  <tr>
-                    <td style={styles.td}>Broker/intermediarios de exportación</td>
-                    <td style={styles.td}>Cobra %+fee 1500usd por operación</td>
-                    <td style={styles.td}>✅ Sí (con comisión)</td>
-                    <td style={styles.td}>❌ No</td>
-                    <td style={styles.td}>❌ No</td>
-                  </tr>
-                </tbody>
-              </table>
+
+              {/* Tabla en escritorio / tarjetas en móvil */}
+              {!isMobile ? (
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>Servicio</th>
+                      <th style={styles.th}>Costo Aproximado Mensual</th>
+                      <th style={styles.th}>¿Incluye Prospectos Automáticos?</th>
+                      <th style={styles.th}>¿Incluye Asesoría y Soporte?</th>
+                      <th style={styles.th}>¿Incluye Tramitología + Requisitos?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r, i) => (
+                      <tr key={i}>
+                        <td style={styles.td}><strong>{r.servicio}</strong></td>
+                        <td style={styles.td}>{r.costo}</td>
+                        <td style={styles.td}>{r.prospectos}</td>
+                        <td style={styles.td}>{r.asesoria}</td>
+                        <td style={styles.td}>{r.tramites}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div style={styles.cardsWrap}>
+                  {rows.map((r, i) => (
+                    <article key={i} style={styles.card} aria-label={`Comparativa - ${r.servicio}`}>
+                      <div style={styles.cardRow}>
+                        <span style={styles.cardLabel}>Servicio</span>
+                        <span style={styles.cardValue}><strong>{r.servicio}</strong></span>
+                      </div>
+                      <div style={styles.cardRow}>
+                        <span style={styles.cardLabel}>Costo mensual</span>
+                        <span style={styles.cardValue}>{r.costo}</span>
+                      </div>
+                      <div style={styles.cardRow}>
+                        <span style={styles.cardLabel}>Prospectos automáticos</span>
+                        <span style={styles.cardValue}>{r.prospectos}</span>
+                      </div>
+                      <div style={styles.cardRow}>
+                        <span style={styles.cardLabel}>Asesoría y soporte</span>
+                        <span style={styles.cardValue}>{r.asesoria}</span>
+                      </div>
+                      <div style={styles.cardRow}>
+                        <span style={styles.cardLabel}>Tramitología + requisitos</span>
+                        <span style={styles.cardValue}>{r.tramites}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -173,97 +229,139 @@ const palette = {
   border: 'rgba(34, 197, 94, 0.25)', // borde con tinte verde
   text: '#e9f6ef',          // texto principal claro
   textMuted: '#cfe9db',     // texto secundario
-  accent: '#22c55e',        // verde acento (similar Tailwind emerald-500)
+  accent: '#22c55e',        // verde acento
   accentSoft: 'rgba(34, 197, 94, 0.14)'
 };
 
-const styles = {
-  section: {
-    background: `linear-gradient(180deg, ${palette.bg} 0%, #082017 100%)`,
-    color: palette.text,
-    padding: '64px 0',
-  },
-  container: {
-    maxWidth: 1200,
-    margin: '0 auto',
-    padding: '0 20px',
-  },
-  title: {
-    fontSize: 28,
-    lineHeight: 1.2,
-    letterSpacing: '0.02em',
-    fontWeight: 800,
-    margin: '0 0 28px',
-    textTransform: 'uppercase',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr',
-    gap: 24,
-  },
-  col: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-  },
-  item: {
-    background: palette.cardBg,
-    border: `1px solid ${palette.border}`,
-    borderRadius: 14,
-    padding: 0,
-    overflow: 'hidden',
-    boxShadow: '0 1px 0 rgba(34,197,94,0.08), 0 10px 30px rgba(0,0,0,0.25)'
-  },
-  summary: {
-    cursor: 'pointer',
-    listStyle: 'none',
-    padding: '16px 18px',
-    fontWeight: 700,
-    outline: 'none',
-    color: palette.text,
-  },
-  content: {
-    padding: '0 18px 16px',
-    color: palette.textMuted,
-  },
-  listBulleted: {
-    paddingLeft: 18,
-    margin: '8px 0 0',
-  },
-  listOrdered: {
-    paddingLeft: 18,
-    margin: '8px 0 0',
-  },
-  tableWrap: {
-    background: palette.cardBg,
-    border: `1px solid ${palette.border}`,
-    borderRadius: 14,
-    padding: 16,
-    overflowX: 'auto',
-    boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.06)'
-  },
-  tableTitle: {
-    fontWeight: 800,
-    marginBottom: 12,
-    color: palette.text,
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    fontSize: 14,
-  },
-  th: {
-    textAlign: 'left',
-    padding: '10px 12px',
-    borderBottom: `1px solid ${palette.border}`,
-    whiteSpace: 'nowrap',
-    color: palette.text,
-    background: palette.accentSoft,
-  },
-  td: {
-    padding: '10px 12px',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
-    verticalAlign: 'top',
-    color: palette.textMuted,
-  },
-};
+function getStyles(isMobile) {
+  return {
+    section: {
+      background: `linear-gradient(180deg, ${palette.bg} 0%, #082017 100%)`,
+      color: palette.text,
+      padding: isMobile ? '40px 0' : '64px 0',
+    },
+    container: {
+      maxWidth: 1200,
+      margin: '0 auto',
+      padding: isMobile ? '0 16px' : '0 20px',
+    },
+    title: {
+      fontSize: isMobile ? 24 : 28,
+      lineHeight: 1.2,
+      letterSpacing: '0.02em',
+      fontWeight: 800,
+      margin: isMobile ? '0 0 20px' : '0 0 28px',
+      textTransform: 'uppercase',
+    },
+    grid: {
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+      gap: isMobile ? 16 : 24,
+    },
+    col: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: isMobile ? 10 : 12,
+    },
+    item: {
+      background: palette.cardBg,
+      border: `1px solid ${palette.border}`,
+      borderRadius: 14,
+      padding: 0,
+      overflow: 'hidden',
+      boxShadow: '0 1px 0 rgba(34,197,94,0.08), 0 10px 30px rgba(0,0,0,0.25)'
+    },
+    summary: {
+      cursor: 'pointer',
+      listStyle: 'none',
+      padding: isMobile ? '14px 14px' : '16px 18px',
+      fontWeight: 700,
+      outline: 'none',
+      color: palette.text,
+      fontSize: isMobile ? 15 : 16,
+      WebkitTapHighlightColor: 'transparent',
+    },
+    content: {
+      padding: isMobile ? '0 14px 14px' : '0 18px 16px',
+      color: palette.textMuted,
+      fontSize: isMobile ? 14 : 15,
+    },
+    listBulleted: {
+      paddingLeft: 18,
+      margin: '8px 0 0',
+    },
+    listOrdered: {
+      paddingLeft: 18,
+      margin: '8px 0 0',
+    },
+    tableWrap: {
+      background: palette.cardBg,
+      border: `1px solid ${palette.border}`,
+      borderRadius: 14,
+      padding: isMobile ? 12 : 16,
+      overflowX: 'auto',
+      boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.06)'
+    },
+    tableTitle: {
+      fontWeight: 800,
+      marginBottom: isMobile ? 8 : 12,
+      color: palette.text,
+      fontSize: isMobile ? 14 : 16,
+    },
+    table: {
+      width: '100%',
+      borderCollapse: 'collapse',
+      fontSize: isMobile ? 13 : 14,
+      minWidth: 720, // para scroll horizontal en pantallas medianas
+      display: isMobile ? 'none' : 'table', // oculta en móvil
+    },
+    th: {
+      textAlign: 'left',
+      padding: isMobile ? '8px 10px' : '10px 12px',
+      borderBottom: `1px solid ${palette.border}`,
+      whiteSpace: 'nowrap',
+      color: palette.text,
+      background: palette.accentSoft,
+      position: 'sticky',
+      top: 0,
+    },
+    td: {
+      padding: isMobile ? '8px 10px' : '10px 12px',
+      borderBottom: '1px solid rgba(255,255,255,0.06)',
+      verticalAlign: 'top',
+      color: palette.textMuted,
+    },
+
+    // Tarjetas (solo móvil)
+    cardsWrap: {
+      display: isMobile ? 'grid' : 'none',
+      gridTemplateColumns: '1fr',
+      gap: 10,
+    },
+    card: {
+      background: 'rgba(10, 35, 25, 0.75)',
+      border: `1px solid ${palette.border}`,
+      borderRadius: 12,
+      padding: 12,
+    },
+    cardRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      gap: 8,
+      padding: '6px 0',
+      borderBottom: '1px dashed rgba(255,255,255,0.08)',
+    },
+    cardLabel: {
+      fontSize: 12,
+      letterSpacing: '0.02em',
+      color: '#bfe5d1',
+      minWidth: 120,
+    },
+    cardValue: {
+      fontSize: 14,
+      color: palette.text,
+      textAlign: 'right',
+      flex: 1,
+    },
+  };
+}
