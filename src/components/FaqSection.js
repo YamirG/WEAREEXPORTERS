@@ -164,28 +164,30 @@ export default function FaqSection() {
 
               {/* Tabla en escritorio / tarjetas en móvil */}
               {!isMobile ? (
-                <table style={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={styles.th}>Servicio</th>
-                      <th style={styles.th}>Costo Aproximado Mensual</th>
-                      <th style={styles.th}>¿Incluye Prospectos Automáticos?</th>
-                      <th style={styles.th}>¿Incluye Asesoría y Soporte?</th>
-                      <th style={styles.th}>¿Incluye Tramitología + Requisitos?</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((r, i) => (
-                      <tr key={i}>
-                        <td style={styles.td}><strong>{r.servicio}</strong></td>
-                        <td style={styles.td}>{r.costo}</td>
-                        <td style={styles.td}>{r.prospectos}</td>
-                        <td style={styles.td}>{r.asesoria}</td>
-                        <td style={styles.td}>{r.tramites}</td>
+                <div style={styles.tableScroll}>
+                  <table style={styles.table}>
+                    <thead>
+                      <tr>
+                        <th style={styles.th}>Servicio</th>
+                        <th style={styles.th}>Costo Aproximado Mensual</th>
+                        <th style={styles.th}>¿Incluye Prospectos Automáticos?</th>
+                        <th style={styles.th}>¿Incluye Asesoría y Soporte?</th>
+                        <th style={styles.th}>¿Incluye Tramitología + Requisitos?</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {rows.map((r, i) => (
+                        <tr key={i}>
+                          <td style={styles.td}><strong>{r.servicio}</strong></td>
+                          <td style={styles.td}>{r.costo}</td>
+                          <td style={styles.td}>{r.prospectos}</td>
+                          <td style={styles.td}>{r.asesoria}</td>
+                          <td style={styles.td}>{r.tramites}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <div style={styles.cardsWrap}>
                   {rows.map((r, i) => (
@@ -224,12 +226,12 @@ export default function FaqSection() {
 
 // Paleta basada en verdes WeAreExporters
 const palette = {
-  bg: '#06140f',            // fondo profundo verde oscuro
+  bg: '#06140f',
   cardBg: 'rgba(10, 35, 25, 0.85)',
-  border: 'rgba(34, 197, 94, 0.25)', // borde con tinte verde
-  text: '#e9f6ef',          // texto principal claro
-  textMuted: '#cfe9db',     // texto secundario
-  accent: '#22c55e',        // verde acento
+  border: 'rgba(34, 197, 94, 0.25)',
+  text: '#e9f6ef',
+  textMuted: '#cfe9db',
+  accent: '#22c55e',
   accentSoft: 'rgba(34, 197, 94, 0.14)'
 };
 
@@ -294,13 +296,14 @@ function getStyles(isMobile) {
       paddingLeft: 18,
       margin: '8px 0 0',
     },
+
+    // CONTENEDOR DE COMPARATIVA
     tableWrap: {
       background: palette.cardBg,
       border: `1px solid ${palette.border}`,
       borderRadius: 14,
       padding: isMobile ? 12 : 16,
-      overflowX: 'auto',
-      boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.06)'
+      boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.06)',
     },
     tableTitle: {
       fontWeight: 800,
@@ -308,31 +311,42 @@ function getStyles(isMobile) {
       color: palette.text,
       fontSize: isMobile ? 14 : 16,
     },
+
+    // SCROLL SOLO DONDE HACE FALTA (TABLA)
+    tableScroll: {
+      overflowX: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      borderRadius: 12,
+    },
+
+    // TABLA (ESCRITORIO)
     table: {
       width: '100%',
       borderCollapse: 'collapse',
-      fontSize: isMobile ? 13 : 14,
-      minWidth: 720, // para scroll horizontal en pantallas medianas
-      display: isMobile ? 'none' : 'table', // oculta en móvil
+      fontSize: 14,
+      tableLayout: 'fixed',             // controla ancho y evita desbordes
+      minWidth: 680,                    // asegura legibilidad; si el contenedor es más chico, se activa scroll
+      maxWidth: '100%',                 // jamás se sale del contenedor
     },
     th: {
       textAlign: 'left',
-      padding: isMobile ? '8px 10px' : '10px 12px',
+      padding: '10px 12px',
       borderBottom: `1px solid ${palette.border}`,
-      whiteSpace: 'nowrap',
       color: palette.text,
       background: palette.accentSoft,
-      position: 'sticky',
-      top: 0,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     },
     td: {
-      padding: isMobile ? '8px 10px' : '10px 12px',
+      padding: '10px 12px',
       borderBottom: '1px solid rgba(255,255,255,0.06)',
       verticalAlign: 'top',
       color: palette.textMuted,
+      overflowWrap: 'anywhere',         // corta textos largos en celdas
     },
 
-    // Tarjetas (solo móvil)
+    // TARJETAS (SOLO MÓVIL)
     cardsWrap: {
       display: isMobile ? 'grid' : 'none',
       gridTemplateColumns: '1fr',
@@ -365,3 +379,4 @@ function getStyles(isMobile) {
     },
   };
 }
+
