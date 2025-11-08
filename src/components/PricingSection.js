@@ -11,14 +11,14 @@ const PricingSection = ({ onOpenRegister }) => {
       description: 'Para empresas comprometidas con la expansión internacional y la búsqueda activa de nuevos mercados.',
       features: [
         'Consultas Ilimitadas',
-        'Búsqueda Ilimitada de mercados',
-        'Listado completo de compradores',
-        'Gestión para Prospección Masiva de Compradores',
-        'Capacitación/Curso (De Cero a Exportador)',
-        'Servicio de Asesoría con IA + Expertos Humanos',
-        'Alerta de oportunidades comerciales',
-        'Actualizaciones Mensuales',
-        'Soporte por email'
+        'Encuentra clientes y distribuidores reales en mercados internacionales',
+        'Accede a guías claras sobre trámites y requisitos de exportación',
+        'Valida demanda con estudios de mercado automatizados',
+        'Lanza campañas de prospección con prospectos verificados (1 al mes incluido)',
+        'Resuelve dudas al instante 24/7 con nuestro Chat IA experto',
+        'Recibe asesorías por videollamada con especialistas en comercio exterior',
+        'Capacítate con talleres y cursos continuos para exportadores',
+        'Mantente al día con noticias y alertas sobre oportunidades globales'
       ],
       cta: 'Obtén 7 días de Prueba Gratis. Plan Premium',
       highlighted: true
