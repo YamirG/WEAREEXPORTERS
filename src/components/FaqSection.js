@@ -2,9 +2,8 @@ import React, { useEffect, useState, useMemo } from 'react';
 
 /**
  * FaqSection.js (Responsive: móvil y escritorio)
- * - Mantiene estructura e información original
- * - Acordeones nativos <details>/<summary>
- * - Comparativa: tabla en desktop / tarjetas en mobile
+ * - Acordeones: sin cambios de forma; solo tipografías/padding responsive
+ * - Comparativa: TABLA en escritorio / TARJETAS VERTICALES en móvil (no se desbordan)
  * - Paleta verde WeAreExporters
  */
 export default function FaqSection() {
@@ -19,7 +18,6 @@ export default function FaqSection() {
 
   const styles = useMemo(() => getStyles(isMobile), [isMobile]);
 
-  // Filas para la tabla / tarjetas
   const rows = [
     {
       servicio: 'We Are Exporters (Plan Premium)',
@@ -162,7 +160,7 @@ export default function FaqSection() {
             <div style={styles.tableWrap} role="region" aria-label="Comparativa de opciones" tabIndex={0}>
               <div style={styles.tableTitle}>Comparativa con otras opciones del mercado</div>
 
-              {/* Tabla en escritorio / tarjetas en móvil */}
+              {/* Escritorio: tabla | Móvil: tarjetas verticales */}
               {!isMobile ? (
                 <div style={styles.tableScroll}>
                   <table style={styles.table}>
@@ -192,23 +190,20 @@ export default function FaqSection() {
                 <div style={styles.cardsWrap}>
                   {rows.map((r, i) => (
                     <article key={i} style={styles.card} aria-label={`Comparativa - ${r.servicio}`}>
-                      <div style={styles.cardRow}>
-                        <span style={styles.cardLabel}>Servicio</span>
-                        <span style={styles.cardValue}><strong>{r.servicio}</strong></span>
-                      </div>
-                      <div style={styles.cardRow}>
+                      <h3 style={styles.cardTitle}>{r.servicio}</h3>
+                      <div style={styles.cardBlock}>
                         <span style={styles.cardLabel}>Costo mensual</span>
                         <span style={styles.cardValue}>{r.costo}</span>
                       </div>
-                      <div style={styles.cardRow}>
+                      <div style={styles.cardBlock}>
                         <span style={styles.cardLabel}>Prospectos automáticos</span>
                         <span style={styles.cardValue}>{r.prospectos}</span>
                       </div>
-                      <div style={styles.cardRow}>
+                      <div style={styles.cardBlock}>
                         <span style={styles.cardLabel}>Asesoría y soporte</span>
                         <span style={styles.cardValue}>{r.asesoria}</span>
                       </div>
-                      <div style={styles.cardRow}>
+                      <div style={styles.cardBlock}>
                         <span style={styles.cardLabel}>Tramitología + requisitos</span>
                         <span style={styles.cardValue}>{r.tramites}</span>
                       </div>
@@ -241,11 +236,13 @@ function getStyles(isMobile) {
       background: `linear-gradient(180deg, ${palette.bg} 0%, #082017 100%)`,
       color: palette.text,
       padding: isMobile ? '40px 0' : '64px 0',
+      boxSizing: 'border-box',
     },
     container: {
       maxWidth: 1200,
       margin: '0 auto',
       padding: isMobile ? '0 16px' : '0 20px',
+      boxSizing: 'border-box',
     },
     title: {
       fontSize: isMobile ? 24 : 28,
@@ -312,21 +309,19 @@ function getStyles(isMobile) {
       fontSize: isMobile ? 14 : 16,
     },
 
-    // SCROLL SOLO DONDE HACE FALTA (TABLA)
+    // TABLA (ESCRITORIO)
     tableScroll: {
       overflowX: 'auto',
       WebkitOverflowScrolling: 'touch',
       borderRadius: 12,
     },
-
-    // TABLA (ESCRITORIO)
     table: {
       width: '100%',
       borderCollapse: 'collapse',
       fontSize: 14,
-      tableLayout: 'fixed',             // controla ancho y evita desbordes
-      minWidth: 680,                    // asegura legibilidad; si el contenedor es más chico, se activa scroll
-      maxWidth: '100%',                 // jamás se sale del contenedor
+      tableLayout: 'fixed',
+      minWidth: 680,
+      maxWidth: '100%',
     },
     th: {
       textAlign: 'left',
@@ -343,40 +338,52 @@ function getStyles(isMobile) {
       borderBottom: '1px solid rgba(255,255,255,0.06)',
       verticalAlign: 'top',
       color: palette.textMuted,
-      overflowWrap: 'anywhere',         // corta textos largos en celdas
+      overflowWrap: 'anywhere',
     },
 
-    // TARJETAS (SOLO MÓVIL)
+    // ----- TARJETAS VERTICALES (MÓVIL) -----
     cardsWrap: {
       display: isMobile ? 'grid' : 'none',
       gridTemplateColumns: '1fr',
-      gap: 10,
+      gap: 12,
     },
     card: {
       background: 'rgba(10, 35, 25, 0.75)',
       border: `1px solid ${palette.border}`,
       borderRadius: 12,
-      padding: 12,
+      padding: 14,
+      boxSizing: 'border-box',
     },
-    cardRow: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      gap: 8,
-      padding: '6px 0',
+    cardTitle: {
+      margin: '0 0 8px',
+      fontSize: 15,
+      fontWeight: 700,
+      color: palette.text,
+      lineHeight: 1.25,
+      wordBreak: 'break-word',
+      overflowWrap: 'anywhere',
+    },
+    cardBlock: {
+      display: 'block',
+      padding: '8px 0',
       borderBottom: '1px dashed rgba(255,255,255,0.08)',
     },
     cardLabel: {
+      display: 'block',
       fontSize: 12,
       letterSpacing: '0.02em',
       color: '#bfe5d1',
-      minWidth: 120,
+      marginBottom: 4,
+      textTransform: 'none',
     },
     cardValue: {
+      display: 'block',
       fontSize: 14,
       color: palette.text,
-      textAlign: 'right',
-      flex: 1,
+      lineHeight: 1.3,
+      textAlign: 'left',
+      wordBreak: 'break-word',
+      overflowWrap: 'anywhere',
     },
   };
 }
-
