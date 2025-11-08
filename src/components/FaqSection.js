@@ -1,47 +1,37 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React from 'react';
 
 /**
- * FaqSection.js (Responsive: móvil y escritorio)
- * - Acordeones: sin cambios de forma; solo tipografías/padding responsive
- * - Comparativa: TABLA en escritorio / TARJETAS VERTICALES en móvil (no se desbordan)
- * - Paleta verde WeAreExporters
+ * FaqSection.js
+ * - Sección FAQ + comparativa vertical
+ * - Desktop: matriz vertical (columna izquierda = hitos)
+ * - Mobile: tarjetas verticales por servicio (sin desbordes)
  */
 export default function FaqSection() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768);
-    onResize();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  const styles = useMemo(() => getStyles(isMobile), [isMobile]);
-
-  const rows = [
+  // Datos de comparativa
+  const services = [
     {
-      servicio: 'We Are Exporters (Plan Premium)',
+      name: 'We Are Exporters (Plan Premium)',
       costo: '💲 Accesible desde $49 USD',
       prospectos: '✅ Sí',
       asesoria: '✅ Sí',
       tramites: '✅ Sí',
     },
     {
-      servicio: 'Consultoría especializada en exportaciones',
+      name: 'Consultoría especializada en exportaciones',
       costo: '$300–$1,500 USD',
       prospectos: '❌ No',
       asesoria: '✅ Sí',
       tramites: '✅ Sí',
     },
     {
-      servicio: 'Organismos de promoción (tipo ProMéxico)',
+      name: 'Organismos de promoción (tipo ProMéxico)',
       costo: 'Gratuito o altos costos ocultos hasta 3000usd',
       prospectos: '❌ No (orientación general)',
       asesoria: '❌ Limitado',
       tramites: '✅ Parcial (según programas)',
     },
     {
-      servicio: 'Broker/intermediarios de exportación',
+      name: 'Broker/intermediarios de exportación',
       costo: 'Cobra %+fee 1500usd por operación',
       prospectos: '✅ Sí (con comisión)',
       asesoria: '❌ No',
@@ -49,13 +39,23 @@ export default function FaqSection() {
     },
   ];
 
+  const labels = [
+    { key: 'name', text: 'Servicio' },
+    { key: 'costo', text: 'Costo Aproximado Mensual' },
+    { key: 'prospectos', text: '¿Incluye Prospectos Automáticos?' },
+    { key: 'asesoria', text: '¿Incluye Asesoría y Soporte?' },
+    { key: 'tramites', text: '¿Incluye Tramitología + Requisitos?' },
+  ];
+
   return (
     <section id="faq" style={styles.section} aria-labelledby="faq-heading">
+      {/* CSS para la matriz vertical y móvil */}
+      <style>{cmpCss}</style>
+
       <div style={styles.container}>
         <h2 id="faq-heading" style={styles.title}>PREGUNTAS FRECUENTES</h2>
 
         <div style={styles.grid}>
-          {/* Columna: FAQ */}
           <div style={styles.col}>
             <details style={styles.item} open>
               <summary style={styles.summary}>❓ ¿We Are Exporters solo ofrece información o realizan gestión?</summary>
@@ -155,62 +155,59 @@ export default function FaqSection() {
             </details>
           </div>
 
-          {/* Columna: Comparativa */}
+          {/* Columna: Comparativa (vertical) */}
           <div style={styles.col}>
             <div style={styles.tableWrap} role="region" aria-label="Comparativa de opciones" tabIndex={0}>
               <div style={styles.tableTitle}>Comparativa con otras opciones del mercado</div>
 
-              {/* Escritorio: tabla | Móvil: tarjetas verticales */}
-              {!isMobile ? (
-                <div style={styles.tableScroll}>
-                  <table style={styles.table}>
-                    <thead>
-                      <tr>
-                        <th style={styles.th}>Servicio</th>
-                        <th style={styles.th}>Costo Aproximado Mensual</th>
-                        <th style={styles.th}>¿Incluye Prospectos Automáticos?</th>
-                        <th style={styles.th}>¿Incluye Asesoría y Soporte?</th>
-                        <th style={styles.th}>¿Incluye Tramitología + Requisitos?</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((r, i) => (
-                        <tr key={i}>
-                          <td style={styles.td}><strong>{r.servicio}</strong></td>
-                          <td style={styles.td}>{r.costo}</td>
-                          <td style={styles.td}>{r.prospectos}</td>
-                          <td style={styles.td}>{r.asesoria}</td>
-                          <td style={styles.td}>{r.tramites}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div style={styles.cardsWrap}>
-                  {rows.map((r, i) => (
-                    <article key={i} style={styles.card} aria-label={`Comparativa - ${r.servicio}`}>
-                      <h3 style={styles.cardTitle}>{r.servicio}</h3>
-                      <div style={styles.cardBlock}>
-                        <span style={styles.cardLabel}>Costo mensual</span>
-                        <span style={styles.cardValue}>{r.costo}</span>
+              {/* MATRIZ VERTICAL (desktop/tablet) */}
+              <div className="cmpV__grid">
+                {/* fila 1: etiqueta + cabeceras de servicios */}
+                <div className="cmpV__labelCell">Servicio</div>
+                {services.map((s, i) => (
+                  <div key={`h-${i}`} className="cmpV__headerCell">
+                    <strong>{s.name}</strong>
+                  </div>
+                ))}
+
+                {/* resto de filas por label */}
+                {labels.filter(l => l.key !== 'name').map((lab) => (
+                  <React.Fragment key={lab.key}>
+                    <div className="cmpV__labelCell">{lab.text}</div>
+                    {services.map((s, i) => (
+                      <div key={`${lab.key}-${i}`} className="cmpV__cell">
+                        {s[lab.key]}
                       </div>
-                      <div style={styles.cardBlock}>
-                        <span style={styles.cardLabel}>Prospectos automáticos</span>
-                        <span style={styles.cardValue}>{r.prospectos}</span>
-                      </div>
-                      <div style={styles.cardBlock}>
-                        <span style={styles.cardLabel}>Asesoría y soporte</span>
-                        <span style={styles.cardValue}>{r.asesoria}</span>
-                      </div>
-                      <div style={styles.cardBlock}>
-                        <span style={styles.cardLabel}>Tramitología + requisitos</span>
-                        <span style={styles.cardValue}>{r.tramites}</span>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* MÓVIL: tarjetas verticales (para no desbordar) */}
+              <div className="cmpV__cards">
+                {services.map((s, i) => (
+                  <article key={`m-${i}`} className="cmpV__card">
+                    <h3 className="cmpV__cardTitle">{s.name}</h3>
+                    <div className="cmpV__block">
+                      <span className="cmpV__label">Costo mensual</span>
+                      <span className="cmpV__value">{s.costo}</span>
+                    </div>
+                    <div className="cmpV__block">
+                      <span className="cmpV__label">Prospectos automáticos</span>
+                      <span className="cmpV__value">{s.prospectos}</span>
+                    </div>
+                    <div className="cmpV__block">
+                      <span className="cmpV__label">Asesoría y soporte</span>
+                      <span className="cmpV__value">{s.asesoria}</span>
+                    </div>
+                    <div className="cmpV__block">
+                      <span className="cmpV__label">Tramitología + requisitos</span>
+                      <span className="cmpV__value">{s.tramites}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
             </div>
           </div>
         </div>
@@ -230,160 +227,137 @@ const palette = {
   accentSoft: 'rgba(34, 197, 94, 0.14)'
 };
 
-function getStyles(isMobile) {
-  return {
-    section: {
-      background: `linear-gradient(180deg, ${palette.bg} 0%, #082017 100%)`,
-      color: palette.text,
-      padding: isMobile ? '40px 0' : '64px 0',
-      boxSizing: 'border-box',
-    },
-    container: {
-      maxWidth: 1200,
-      margin: '0 auto',
-      padding: isMobile ? '0 16px' : '0 20px',
-      boxSizing: 'border-box',
-    },
-    title: {
-      fontSize: isMobile ? 24 : 28,
-      lineHeight: 1.2,
-      letterSpacing: '0.02em',
-      fontWeight: 800,
-      margin: isMobile ? '0 0 20px' : '0 0 28px',
-      textTransform: 'uppercase',
-    },
-    grid: {
-      display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-      gap: isMobile ? 16 : 24,
-    },
-    col: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: isMobile ? 10 : 12,
-    },
-    item: {
-      background: palette.cardBg,
-      border: `1px solid ${palette.border}`,
-      borderRadius: 14,
-      padding: 0,
-      overflow: 'hidden',
-      boxShadow: '0 1px 0 rgba(34,197,94,0.08), 0 10px 30px rgba(0,0,0,0.25)'
-    },
-    summary: {
-      cursor: 'pointer',
-      listStyle: 'none',
-      padding: isMobile ? '14px 14px' : '16px 18px',
-      fontWeight: 700,
-      outline: 'none',
-      color: palette.text,
-      fontSize: isMobile ? 15 : 16,
-      WebkitTapHighlightColor: 'transparent',
-    },
-    content: {
-      padding: isMobile ? '0 14px 14px' : '0 18px 16px',
-      color: palette.textMuted,
-      fontSize: isMobile ? 14 : 15,
-    },
-    listBulleted: {
-      paddingLeft: 18,
-      margin: '8px 0 0',
-    },
-    listOrdered: {
-      paddingLeft: 18,
-      margin: '8px 0 0',
-    },
+const styles = {
+  section: {
+    background: `linear-gradient(180deg, ${palette.bg} 0%, #082017 100%)`,
+    color: palette.text,
+    padding: '64px 0',
+  },
+  container: {
+    maxWidth: 1200,
+    margin: '0 auto',
+    padding: '0 20px',
+  },
+  title: {
+    fontSize: 28,
+    lineHeight: 1.2,
+    letterSpacing: '0.02em',
+    fontWeight: 800,
+    margin: '0 0 28px',
+    textTransform: 'uppercase',
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gap: 24,
+  },
+  col: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  },
+  item: {
+    background: palette.cardBg,
+    border: `1px solid ${palette.border}`,
+    borderRadius: 14,
+    padding: 0,
+    overflow: 'hidden',
+    boxShadow: '0 1px 0 rgba(34,197,94,0.08), 0 10px 30px rgba(0,0,0,0.25)'
+  },
+  summary: {
+    cursor: 'pointer',
+    listStyle: 'none',
+    padding: '16px 18px',
+    fontWeight: 700,
+    outline: 'none',
+    color: palette.text,
+  },
+  content: {
+    padding: '0 18px 16px',
+    color: palette.textMuted,
+  },
+  listBulleted: {
+    paddingLeft: 18,
+    margin: '8px 0 0',
+  },
+  listOrdered: {
+    paddingLeft: 18,
+    margin: '8px 0 0',
+  },
+  tableWrap: {
+    background: palette.cardBg,
+    border: `1px solid ${palette.border}`,
+    borderRadius: 14,
+    padding: 16,
+    overflow: 'hidden',
+    boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.06)'
+  },
+  tableTitle: {
+    fontWeight: 800,
+    marginBottom: 12,
+    color: palette.text,
+  },
+};
 
-    // CONTENEDOR DE COMPARATIVA
-    tableWrap: {
-      background: palette.cardBg,
-      border: `1px solid ${palette.border}`,
-      borderRadius: 14,
-      padding: isMobile ? 12 : 16,
-      boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.06)',
-    },
-    tableTitle: {
-      fontWeight: 800,
-      marginBottom: isMobile ? 8 : 12,
-      color: palette.text,
-      fontSize: isMobile ? 14 : 16,
-    },
-
-    // TABLA (ESCRITORIO)
-    tableScroll: {
-      overflowX: 'auto',
-      WebkitOverflowScrolling: 'touch',
-      borderRadius: 12,
-    },
-    table: {
-      width: '100%',
-      borderCollapse: 'collapse',
-      fontSize: 14,
-      tableLayout: 'fixed',
-      minWidth: 680,
-      maxWidth: '100%',
-    },
-    th: {
-      textAlign: 'left',
-      padding: '10px 12px',
-      borderBottom: `1px solid ${palette.border}`,
-      color: palette.text,
-      background: palette.accentSoft,
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-    },
-    td: {
-      padding: '10px 12px',
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
-      verticalAlign: 'top',
-      color: palette.textMuted,
-      overflowWrap: 'anywhere',
-    },
-
-    // ----- TARJETAS VERTICALES (MÓVIL) -----
-    cardsWrap: {
-      display: isMobile ? 'grid' : 'none',
-      gridTemplateColumns: '1fr',
-      gap: 12,
-    },
-    card: {
-      background: 'rgba(10, 35, 25, 0.75)',
-      border: `1px solid ${palette.border}`,
-      borderRadius: 12,
-      padding: 14,
-      boxSizing: 'border-box',
-    },
-    cardTitle: {
-      margin: '0 0 8px',
-      fontSize: 15,
-      fontWeight: 700,
-      color: palette.text,
-      lineHeight: 1.25,
-      wordBreak: 'break-word',
-      overflowWrap: 'anywhere',
-    },
-    cardBlock: {
-      display: 'block',
-      padding: '8px 0',
-      borderBottom: '1px dashed rgba(255,255,255,0.08)',
-    },
-    cardLabel: {
-      display: 'block',
-      fontSize: 12,
-      letterSpacing: '0.02em',
-      color: '#bfe5d1',
-      marginBottom: 4,
-      textTransform: 'none',
-    },
-    cardValue: {
-      display: 'block',
-      fontSize: 14,
-      color: palette.text,
-      lineHeight: 1.3,
-      textAlign: 'left',
-      wordBreak: 'break-word',
-      overflowWrap: 'anywhere',
-    },
-  };
+// CSS para la comparativa vertical (desktop) y tarjetas (móvil)
+const cmpCss = `
+:root{
+  --card: ${palette.cardBg};
+  --border:${palette.border};
+  --text:${palette.text};
+  --muted:${palette.textMuted};
+  --accent-soft:${palette.accentSoft};
 }
+
+/* Matriz vertical (visible en ≥768px) */
+.cmpV__grid{
+  display:grid;
+  grid-template-columns: 200px repeat(4, minmax(180px,1fr)); /* col izquierda + 4 servicios */
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:auto;
+  background:var(--card);
+}
+.cmpV__labelCell{
+  padding:12px 14px;
+  background:var(--accent-soft);
+  border-bottom:1px solid var(--border);
+  color:var(--text);
+  font-weight:700;
+}
+.cmpV__headerCell{
+  padding:12px 14px;
+  background:var(--accent-soft);
+  border-left:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  color:var(--text);
+}
+.cmpV__cell{
+  padding:12px 14px;
+  border-left:1px solid var(--border);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  color:var(--muted);
+  overflow-wrap:anywhere;
+}
+
+/* Tarjetas móviles (visible en <768px) */
+.cmpV__cards{ display:none; }
+.cmpV__card{
+  background:rgba(10,35,25,.75);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px;
+  margin-top:12px;
+}
+.cmpV__cardTitle{ margin:0 0 8px; font-size:15px; font-weight:700; color:var(--text); }
+.cmpV__block{ display:block; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.08); }
+.cmpV__block:last-child{ border-bottom:none; }
+.cmpV__label{ display:block; font-size:12px; color:#bfe5d1; margin-bottom:4px; }
+.cmpV__value{ display:block; font-size:14px; color:var(--text); line-height:1.35; overflow-wrap:anywhere; }
+
+/* Responsive */
+@media (max-width: 767px){
+  .cmpV__grid{ display:none; }
+  .cmpV__cards{ display:grid; grid-template-columns:1fr; gap:12px; }
+}
+`;
