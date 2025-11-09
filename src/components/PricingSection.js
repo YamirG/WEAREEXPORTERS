@@ -5,7 +5,7 @@ const PricingSection = ({ onOpenRegister }) => {
   const plans = [
     {
       name: 'Premium',
-      price: '$49',
+      price: '$49usd',
       period: 'mes',
       
       description: 'Para empresas comprometidas con la expansión internacional y la búsqueda activa de nuevos mercados.',
