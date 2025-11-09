@@ -15,10 +15,10 @@ const PAYPAL_PLAN_ID =
 
 // ✅ URL del backend que verifica el token (Apps Script o Edge Function)
 const RECAPTCHA_VERIFY_URL =
-  process.env.REACT_APP_RECAPTCHA_VERIFY_URL || 'https://script.google.com/macros/s/AKfycbwO0yKOgj6cDwSEzNFF68XB-82_h_zEo7UZs734OA8kqdT4CFkHX1auSZUaJ4k4tIc5/exec';
+  process.env.REACT_APP_RECAPTCHA_VERIFY_URL ||
+  'https://script.google.com/macros/s/AKfycbwO0yKOgj6cDwSEzNFF68XB-82_h_zEo7UZs734OA8kqdT4CFkHX1auSZUaJ4k4tIc5/exec';
 
 async function verifyRecaptchaTokenV3(token) {
-  // Si no configuraste backend todavía, no bloquees el registro:
   if (!RECAPTCHA_VERIFY_URL) return { ok: true, skipped: true };
   try {
     const res = await fetch(RECAPTCHA_VERIFY_URL, {
@@ -27,7 +27,7 @@ async function verifyRecaptchaTokenV3(token) {
       body: JSON.stringify({ token, action: 'register' }),
     });
     const data = await res.json().catch(() => ({}));
-    return data; // esperado { ok: true, score, ... }
+    return data;
   } catch (e) {
     console.error('verifyRecaptchaTokenV3 error:', e);
     return { ok: false, error: String(e) };
@@ -44,6 +44,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   });
   const [agreeTerms, setAgreeTerms] = useState(false);
 
+  // Conservamos estados por compatibilidad
   const [paid, setPaid] = useState(false);
   const [subscriptionId, setSubscriptionId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -68,65 +69,148 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
+  // ✅ Valida formulario antes de permitir PayPal
+  const validateBeforePayPal = () => {
+    if (!agreeTerms) return 'Debes aceptar los términos y privacidad.';
+    if (!formData.name || !formData.email || !formData.password) return 'Completa nombre, email y contraseña.';
+    if (formData.password.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
+    if (!formData.company) return 'Ingresa el nombre de tu empresa.';
+    if (!formData.industry) return 'Selecciona una industria.';
+    return null;
+  };
 
-    try {
-      if (!agreeTerms) throw new Error('Debes aceptar los términos y privacidad.');
-      if (!paid || !subscriptionId) throw new Error('Completa la suscripción con PayPal antes de crear la cuenta.');
+  // ✅ Registro / SignIn + INSERT (si conflicto → UPDATE)
+  const autoRegisterAfterPayPal = useCallback(
+    async (subId) => {
+      try {
+        setIsLoading(true);
 
-      if (!executeRecaptcha) {
-        throw new Error('reCAPTCHA no está listo. Refresca la página e intenta de nuevo.');
-      }
+        if (!executeRecaptcha) throw new Error('reCAPTCHA no está listo. Refresca la página e intenta de nuevo.');
+        const token = await executeRecaptcha('register');
+        if (!token) throw new Error('No se pudo obtener el token de reCAPTCHA.');
+        const check = await verifyRecaptchaTokenV3(token);
+        if (!check?.ok) throw new Error('Validación reCAPTCHA fallida.');
+        if (typeof check.score === 'number' && check.score < 0.5) {
+          throw new Error('Detección de actividad inusual. Intenta nuevamente.');
+        }
 
-      // 1) Obtener token v3
-      const token = await executeRecaptcha('register');
-      if (!token) throw new Error('No se pudo obtener el token de reCAPTCHA.');
-
-      // 2) Verificar token en tu backend (GAS/Edge)
-      const check = await verifyRecaptchaTokenV3(token);
-      if (!check?.ok) throw new Error('Validación reCAPTCHA fallida.');
-      if (typeof check.score === 'number' && check.score < 0.5) {
-        throw new Error('Detección de actividad inusual. Intenta nuevamente.');
-      }
-
-      setIsLoading(true);
-
-      // 3) Registro en Supabase
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-      });
-      if (signUpError) throw signUpError;
-
-      const userId = authData?.user?.id || authData?.session?.user?.id;
-      if (!userId) throw new Error('No se pudo obtener el ID del usuario.');
-
-      const { error: insertError } = await supabase.from('users').insert([
+        // 0) Intentar SIGN IN primero (si ya existe el usuario)
+        let userId = null;
         {
+          const { data: signIn0, error: signInErr0 } = await supabase.auth.signInWithPassword({
+            email: formData.email,
+            password: formData.password,
+          });
+          if (!signInErr0) {
+            userId = signIn0?.user?.id || null;
+          }
+        }
+
+        // 1) Si no se pudo, intentamos SIGN UP (y si no trae sesión, forzamos signIn)
+        if (!userId) {
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+          });
+          if (signUpError) {
+            // Si ya estaba registrado, reintenta signIn
+            const { data: signIn1, error: signInErr1 } = await supabase.auth.signInWithPassword({
+              email: formData.email,
+              password: formData.password,
+            });
+            if (signInErr1) throw signInErr1;
+            userId = signIn1?.user?.id || null;
+          } else {
+            userId = signUpData?.user?.id || signUpData?.session?.user?.id || null;
+            if (!signUpData?.session) {
+              // Confirmaciones de email activas → crear sesión para pasar RLS
+              const { data: signIn2, error: signInErr2 } = await supabase.auth.signInWithPassword({
+                email: formData.email,
+                password: formData.password,
+              });
+              if (signInErr2) throw signInErr2;
+              userId = userId || signIn2?.user?.id || null;
+            }
+          }
+        }
+
+        // 2) Última verificación de userId por si acaso
+        if (!userId) {
+          const { data: me } = await supabase.auth.getUser();
+          userId = me?.user?.id || null;
+        }
+        if (!userId) throw new Error('No se pudo obtener el ID del usuario (sesión requerida).');
+
+        // 3) INSERT primero (trial). Si hay conflicto, hacemos UPDATE
+        const insertPayload = {
           id: userId,
           name: formData.name,
           email: formData.email,
           company: formData.company,
           industry: formData.industry,
-          is_premium: false,                 // se activará por webhook de PayPal
-          paypal_subscription_id: subscriptionId,
-          paypal_status: 'pending',
+          paypal_subscription_id: subId,
+          paypal_status: 'pending', // trial
+          is_premium: true,         // acceso inmediato
           created_at: new Date(),
-        },
-      ]);
-      if (insertError) throw insertError;
+        };
 
-      alert('Cuenta creada. Tu suscripción se activará en unos segundos.');
-      onClose();
-      navigate('/premiumdashboard');
-    } catch (err) {
-      console.error('handleSubmit error:', err);
-      alert(err.message || 'Error inesperado.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [agreeTerms, paid, subscriptionId, executeRecaptcha, formData, navigate, onClose]);
+        let inserted = false;
+        let conflict = false;
+
+        const { error: insertErr } = await supabase.from('users').insert(insertPayload);
+        if (!insertErr) {
+          inserted = true;
+        } else {
+          const msg = (insertErr?.message || '').toLowerCase();
+          if (
+            msg.includes('duplicate key') ||
+            msg.includes('already exists') ||
+            msg.includes('violates unique constraint') ||
+            insertErr?.code === '23505'
+          ) {
+            conflict = true;
+          } else {
+            // Otro error (por ejemplo, RLS insert denegado)
+            console.log('[db] insert error:', insertErr);
+            throw insertErr;
+          }
+        }
+
+        if (!inserted && conflict) {
+          // UPDATE explícito (requiere policy de UPDATE propia)
+          const { error: updateErr } = await supabase
+            .from('users')
+            .update({
+              paypal_subscription_id: subId,
+              paypal_status: 'pending',
+              is_premium: true,
+              name: formData.name,
+              company: formData.company,
+              industry: formData.industry,
+            })
+            .eq('id', userId);
+
+          if (updateErr) {
+            console.log('[db] update after conflict error:', updateErr);
+            throw updateErr;
+          }
+        }
+
+        // Refuerzo idempotente (por si otro flujo pisa is_premium)
+        await supabase.from('users').update({ is_premium: true }).eq('id', userId);
+
+        alert('¡Listo! Tu cuenta premium (periodo de prueba) fue activada.');
+        onClose?.();
+        navigate('/premiumdashboard');
+      } catch (err) {
+        console.error('autoRegisterAfterPayPal error:', err);
+        alert(err.message || 'Error al crear tu cuenta después del pago.');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [executeRecaptcha, formData, navigate, onClose]
+  );
 
   if (!isOpen) return null;
 
@@ -181,7 +265,8 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                   </ul>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Formulario */}
+                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
                   <input type="text" name="name" placeholder="Nombre completo" value={formData.name} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border rounded-md" />
                   <input type="email" name="email" placeholder="Correo electrónico" value={formData.email} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border rounded-md" />
                   <input type="password" name="password" placeholder="Contraseña" value={formData.password} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border rounded-md" />
@@ -194,47 +279,65 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                   </select>
 
                   <div className="flex items-start">
-                    <input id="terms" type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="h-4 w-4 text-green-600 border-gray-300 rounded" required />
+                    <input
+                      id="terms"
+                      type="checkbox"
+                      checked={agreeTerms}
+                      onChange={(e) => setAgreeTerms(e.target.checked)}
+                      className="h-4 w-4 text-green-600 border-gray-300 rounded"
+                      required
+                    />
                     <label htmlFor="terms" className="ml-2 text-sm text-gray-700">
                       Acepto los <a href="#" className="text-green-600">términos</a> y <a href="#" className="text-green-600">privacidad</a>
                     </label>
                   </div>
 
-                  {!paid ? (
-                    <PayPalScriptProvider options={{ 'client-id': PAYPAL_CLIENT_ID, vault: true, intent: 'subscription' }}>
-                      <PayPalButtons
-                        style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'subscribe' }}
-                        createSubscription={(data, actions) => {
-                          return actions.subscription.create({ plan_id: PAYPAL_PLAN_ID });
-                        }}
-                        onApprove={async (data) => {
-                          try {
-                            const subId = data?.subscriptionID;
-                            if (!subId) throw new Error('No se recibió subscriptionID de PayPal.');
-                            setSubscriptionId(subId);
-                            setPaid(true);
-                            alert('Suscripción creada correctamente. Ahora completa el formulario para registrar tu cuenta.');
-                          } catch (error) {
-                            console.error('Error en aprobación:', error);
-                            alert('Ocurrió un error al crear la suscripción.');
-                          }
-                        }}
-                        onError={(err) => {
-                          console.error('Error de PayPal:', err);
-                          alert('Error al procesar la suscripción.');
-                        }}
-                      />
-                    </PayPalScriptProvider>
-                  ) : (
-                    <button
-                      type="submit"
-                      className="w-full py-2 px-4 rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-                      disabled={isLoading || !agreeTerms}
-                    >
-                      {isLoading ? 'Creando cuenta...' : 'Crear cuenta'}
-                    </button>
-                  )}
+                  {/* PayPal: ahora registra automáticamente en onApprove */}
+                  <PayPalScriptProvider options={{ 'client-id': PAYPAL_CLIENT_ID, vault: true, intent: 'subscription' }}>
+                    <PayPalButtons
+                      style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'subscribe' }}
+                      onClick={(data, actions) => {
+                        const msg = validateBeforePayPal();
+                        if (msg) {
+                          alert(msg);
+                          return actions.reject();
+                        }
+                        return actions.resolve();
+                      }}
+                      createSubscription={(data, actions) => {
+                        return actions.subscription.create({ plan_id: PAYPAL_PLAN_ID });
+                      }}
+                      onApprove={async (data) => {
+                        try {
+                          const subId = data?.subscriptionID;
+                          if (!subId) throw new Error('No se recibió subscriptionID de PayPal.');
+                          setSubscriptionId(subId);
+                          setPaid(true); // compatibilidad con estado previo
+                          await autoRegisterAfterPayPal(subId); // INSERT → (conflicto) UPDATE → refuerzo
+                        } catch (error) {
+                          console.error('Error en aprobación:', error);
+                          alert('Ocurrió un error al activar tu cuenta.');
+                        }
+                      }}
+                      onError={(err) => {
+                        console.error('Error de PayPal:', err);
+                        alert('Error al procesar la suscripción.');
+                      }}
+                    />
+                  </PayPalScriptProvider>
+
+                  {/* Botón final ya NO es necesario; lo dejamos oculto por compatibilidad */}
+                  <button
+                    type="button"
+                    className="w-full py-2 px-4 rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+                    style={{ display: 'none' }}
+                    disabled
+                  >
+                    Crear cuenta
+                  </button>
                 </form>
+
+                {isLoading && <p className="mt-3 text-sm text-gray-600">Activando tu cuenta…</p>}
 
                 <div className="mt-6 text-center">
                   <p className="text-sm text-gray-600">
