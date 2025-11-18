@@ -147,6 +147,7 @@ const CarteraTab = ({ walletBalance = 0, setWalletBalance }) => {
         <h2 className="text-white text-2xl md:text-3xl font-bold">Gestionar Cartera Digital</h2>
         <p className="text-emerald-50 mt-1">
           Recarga tu saldo para financiar tus propias campañas de prospeccion masiva internacional.
+          Recuerda: Al ser usuario activo (al corriente de tu suscripción) recibiras 50usd como bono de regalo (podrás verlo reflejado aquí en tu cartera digital) válido para canjear por 1 campaña de prospección masiva (no transferible, no acumulable)
         </p>
         <div className="mt-3 inline-flex items-center gap-2 bg-emerald-600/20 text-white rounded-full px-3 py-1 text-sm">
           Saldo actual: <span className="font-semibold">${Number(walletBalance || 0).toFixed(2)}</span>
@@ -250,3 +251,4 @@ const CarteraTab = ({ walletBalance = 0, setWalletBalance }) => {
 };
 
 export default CarteraTab;
+
