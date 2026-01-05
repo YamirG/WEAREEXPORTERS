@@ -169,10 +169,7 @@ export default function LandingWeAreExporters() {
 
             {/* Chips */}
             <div className="mt-6 flex flex-wrap gap-2">
-              <Chip>Mercados recomendados</Chip>
-              <Chip>Requisitos & tramitología</Chip>
-              <Chip>Prospección masiva</Chip>
-              <Chip>Panel premium</Chip>
+             
             </div>
 
             {/* Confianza */}
