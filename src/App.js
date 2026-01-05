@@ -192,7 +192,11 @@ const AppInner = () => {
 
 const App = () => {
   // ✅ reCAPTCHA v3 Site Key desde el entorno
-  const RECAPTCHA_V3_SITE_KEY = process.env.REACT_APP_RECAPTCHA_V3_SITE_KEY || '';
+  const RECAPTCHA_V3_SITE_KEY =
+  process.env.REACT_APP_RECAPTCHA_V3_SITE_KEY ||
+  process.env.REACT_APP_RECAPTCHA_SITE_KEY ||
+  '';
+
 
   const hasValidRecaptchaKey =
     typeof RECAPTCHA_V3_SITE_KEY === 'string' && RECAPTCHA_V3_SITE_KEY.length > 30;
