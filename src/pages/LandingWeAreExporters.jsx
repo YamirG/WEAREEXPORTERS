@@ -312,7 +312,7 @@ export default function LandingWeAreExporters() {
                   />
                 </svg>
               </span>
-              ¿DUDAS? - Agenda Videollamda, Aquí
+              ¿DUDAS? Agenda Videollamada, Aquí
             </a>
           </div>
         </div>
@@ -532,3 +532,4 @@ function TimeBox({ label, value }) {
     </div>
   );
 }
+
