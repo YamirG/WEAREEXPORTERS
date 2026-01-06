@@ -2,6 +2,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import RegisterModal from "../components/RegisterModal";
+import FaqSection from "../components/FaqSection"; // ✅ reutilizamos tu FAQ existente
 
 const isYouTube = (url = "") =>
   /(?:youtube\.com\/watch\?v=|youtu\.be\/)/i.test(url);
@@ -35,7 +36,12 @@ function formatCountdown(ms) {
   const seconds = totalSeconds % 60;
 
   const pad2 = (n) => String(n).padStart(2, "0");
-  return { days, hours: pad2(hours), minutes: pad2(minutes), seconds: pad2(seconds) };
+  return {
+    days,
+    hours: pad2(hours),
+    minutes: pad2(minutes),
+    seconds: pad2(seconds),
+  };
 }
 
 export default function LandingWeAreExporters() {
@@ -64,10 +70,10 @@ export default function LandingWeAreExporters() {
   const [remainingMs, setRemainingMs] = useState(() => deadline - Date.now());
 
   useEffect(() => {
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       setRemainingMs(deadline - Date.now());
     }, 1000);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, [deadline]);
 
   const t = formatCountdown(remainingMs);
@@ -90,7 +96,6 @@ export default function LandingWeAreExporters() {
             className="flex items-center gap-2"
             aria-label="Ir a WeAreExporters"
           >
-            {/* ✅ Se quitó el bloque verde del logo (placeholder) */}
             <div className="leading-tight">
               <div className="text-sm font-extrabold tracking-tight">
                 WeAreExporters
@@ -130,7 +135,6 @@ export default function LandingWeAreExporters() {
       {/* HERO */}
       <section className="mx-auto max-w-6xl px-4 pt-10 md:pt-14">
         <div className="grid items-center gap-10 md:grid-cols-2">
-          {/* Copy */}
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
               ✅ 7 días de Prueba Gratis en Premium
@@ -167,12 +171,8 @@ export default function LandingWeAreExporters() {
               </button>
             </div>
 
-            {/* Chips */}
-            <div className="mt-6 flex flex-wrap gap-2">
-             
-            </div>
+            <div className="mt-6 flex flex-wrap gap-2"></div>
 
-            {/* Confianza */}
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <Stat k="+Velocidad" v="Decisiones en minutos" />
               <Stat k="+Claridad" v="Pasos y requisitos" />
@@ -180,7 +180,6 @@ export default function LandingWeAreExporters() {
             </div>
           </div>
 
-          {/* Card derecha */}
           <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-extrabold text-gray-900">
@@ -275,6 +274,47 @@ export default function LandingWeAreExporters() {
               </div>
             )}
           </div>
+
+          {/* ✅ Copy agresivo (opción 1) + Calendly */}
+          <p className="mt-6 text-center text-sm font-extrabold text-gray-900">
+            ¿Aún no estás seguro si tu producto puede exportarse?
+          </p>
+          <p className="mt-1 text-center text-sm text-gray-600">
+            Habla directamente con un asesor en comercio exterior y valida tu
+            caso en minutos.
+          </p>
+
+          <div className="mt-4 flex justify-center">
+            <a
+              href="https://calendly.com/asesoresparaexportadores/funcionamiento-app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 rounded-2xl border border-green-600 bg-white px-6 py-3 text-sm font-extrabold text-green-700 shadow-sm transition hover:bg-green-50 hover:shadow-md"
+            >
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-green-100 text-green-700">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                  <path
+                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <rect
+                    x="3"
+                    y="6"
+                    width="12"
+                    height="12"
+                    rx="2"
+                    ry="2"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                </svg>
+              </span>
+              ¿DUDAS? - Agenda Videollamda, Aquí
+            </a>
+          </div>
         </div>
       </section>
 
@@ -331,7 +371,7 @@ export default function LandingWeAreExporters() {
                 cancelas.
               </p>
 
-              {/* ✅ BLOQUE NUEVO: Temporizador (1 día) — diseño ad hoc */}
+              {/* ✅ Temporizador */}
               <div className="mt-5 inline-flex flex-col gap-2 rounded-2xl bg-white/10 p-4 ring-1 ring-white/25 backdrop-blur">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/20">
@@ -364,11 +404,8 @@ export default function LandingWeAreExporters() {
                   <TimeBox label="Seg" value={t.seconds} />
                 </div>
 
-                <div className="text-xs text-white/85">
-                  
-                </div>
+                <div className="text-xs text-white/85"></div>
               </div>
-              {/* ✅ FIN TEMPORIZADOR */}
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row md:justify-end">
@@ -389,6 +426,26 @@ export default function LandingWeAreExporters() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* ✅ FAQ (DESPUÉS DEL TEMPORIZADOR / CTA FINAL) */}
+      <section className="mx-auto max-w-6xl px-4 pb-12 md:pb-16">
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
+          <div className="text-center">
+            <h2 className="text-2xl font-black text-gray-900 md:text-3xl">
+              
+            </h2>
+            <p className="mx-auto mt-2 max-w-2xl text-sm text-gray-600 md:text-base">
+              Resuelve tus dudas antes de registrarte. Aquí están las preguntas
+              más comunes.
+            </p>
+          </div>
+
+          {/* ✅ Reutiliza tu componente existente, envuelto con el diseño de la landing */}
+          <div className="mt-8">
+            <FaqSection />
+          </div>
+        </div>
 
         <p className="mt-6 text-center text-xs text-gray-500">
           © {new Date().getFullYear()} WeAreExporters — Todos los derechos
@@ -402,7 +459,7 @@ export default function LandingWeAreExporters() {
         onClose={closeRegister}
         onSwitchToLogin={() => {
           closeRegister();
-          navigate("/"); // fallback: abre login desde plataforma
+          navigate("/");
         }}
       />
 
@@ -421,14 +478,6 @@ export default function LandingWeAreExporters() {
 }
 
 /* UI atoms */
-function Chip({ children }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold text-gray-700">
-      {children}
-    </span>
-  );
-}
-
 function Stat({ k, v }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
