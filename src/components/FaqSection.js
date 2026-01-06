@@ -149,7 +149,7 @@ export default function FaqSection() {
               <summary style={styles.summary}>❓ ¿Tiene garantía?</summary>
               <div style={styles.content}>
                 <p>
-                  Sí. Al registrarte activas automáticamente 7 días de prueba gratuita donde podrás explorar el panel completo, validar oportunidades reales según tu producto. Si no ves el valor, puedes cancelar sin compromiso. Si ves el potencial, podrás continuar con tu expansión global desde el día 1. También puedes solicitar una Demo para que veas en tiempo real como se aplica en tu producto.
+                  Sí. Al registrarte activas automáticamente 7 días de prueba gratuita donde podrás explorar el panel completo, validar oportunidades reales según tu producto. Si no ves el valor, puedes cancelar sin compromiso. Si ves el potencial, podrás continuar con tu expansión global desde el día 1. También puedes solicitar una videollamada para que veas en tiempo real como se aplica en tu producto.
                 </p>
               </div>
             </details>
@@ -158,7 +158,7 @@ export default function FaqSection() {
           {/* Columna: Comparativa (vertical) */}
           <div style={styles.col}>
             <div style={styles.tableWrap} role="region" aria-label="Comparativa de opciones" tabIndex={0}>
-              <div style={styles.tableTitle}>Comparativa con otras opciones del mercado</div>
+              <div style={styles.tableTitle}>Mira en el siguiente cuadro una comparativa entre WeAreExporters y lo que cobran otras instituciones y agentes tradicionales</div>
 
               {/* MATRIZ VERTICAL (desktop/tablet) */}
               <div className="cmpV__grid">
