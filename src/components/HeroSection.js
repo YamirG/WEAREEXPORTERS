@@ -1,6 +1,18 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const HeroSection = ({ onGetStarted }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    // Si existe función externa, la respeta
+    if (onGetStarted) {
+      onGetStarted();
+    }
+    // Redirección a la landing
+    navigate('/lp/weareexporters');
+  };
+
   return (
     <div className="bg-gradient-to-b from-emerald-800 to-green-600 text-white">
       <div className="container mx-auto px-4 py-16 md:py-24">
@@ -12,13 +24,16 @@ const HeroSection = ({ onGetStarted }) => {
             <p className="text-xl md:text-2xl mb-8 text-green-100">
               Descubre dónde vender tu producto, qué requisitos necesitas y conecta con compradores reales en todo el mundo.
             </p>
+
             <button 
-              onClick={onGetStarted}
+              onClick={handleClick}
               className="px-8 py-3 bg-white text-green-700 rounded-lg font-semibold hover:bg-green-50 transition-colors shadow-lg transform hover:scale-105 duration-200 text-lg"
             >
-              Comenzar ahora
+              Ver Demostración
             </button>
+
           </div>
+
           <div className="md:w-1/2 md:pl-10">
             <div className="bg-white/10 backdrop-blur-sm p-4 md:p-6 rounded-xl shadow-2xl border border-white/20">
               <img 
