@@ -40,6 +40,7 @@ export default function ExportarFlow() {
         fees: data?.fees || '',
         generatedAt: new Date().toISOString(),
         brand: BRAND,
+        officialManual: data?.officialManual || null,
       };
 
       setManual(normalized);
@@ -111,16 +112,16 @@ export default function ExportarFlow() {
 
         <div className="md:col-span-4">
           <button
-  type="submit"
-  disabled={loading || !country || !procedure}
-  className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-medium text-sm md:text-base transition-all duration-200
-    ${loading || !country || !procedure
-      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-      : 'bg-green-100 text-green-700 hover:bg-green-200 active:scale-[0.98]'
-    }`}
->
-  {loading ? 'Generando…' : 'Generar Guía'}
-</button>
+            type="submit"
+            disabled={loading || !country || !procedure}
+            className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-medium text-sm md:text-base transition-all duration-200
+              ${loading || !country || !procedure
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-green-100 text-green-700 hover:bg-green-200 active:scale-[0.98]'
+              }`}
+          >
+            {loading ? 'Generando…' : 'Generar Guía'}
+          </button>
         </div>
       </form>
 
