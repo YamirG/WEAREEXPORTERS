@@ -1,8 +1,7 @@
 import dayjs from 'dayjs';
 import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 
-// Compatibilidad con distintas versiones de pdfmake
 pdfMake.vfs =
   pdfFonts?.pdfMake?.vfs ||
   pdfFonts?.vfs ||
@@ -24,7 +23,43 @@ export const exportGuide = (manual) => {
     sla,
     fees,
     generatedAt,
+    officialManual,
   } = manual;
+
+  const officialManualBlock = officialManual
+    ? [
+        {
+          text: 'Guía oficial de usuario',
+          fontSize: 12,
+          bold: true,
+          color: '#045023',
+          margin: [0, 12, 0, 6],
+        },
+        {
+          text: `Manual: ${officialManual.label || 'Manual oficial'}`,
+          margin: [0, 0, 0, 4],
+        },
+        {
+          text: `Dependencia: ${officialManual.agency || '—'}`,
+          margin: [0, 0, 0, 4],
+        },
+        ...(officialManual.notes
+          ? [{ text: `Notas: ${officialManual.notes}`, margin: [0, 0, 0, 4] }]
+          : []),
+        ...(officialManual.url
+          ? [{
+              text: officialManual.url,
+              link: officialManual.url,
+              color: 'blue',
+              decoration: 'underline',
+              margin: [0, 0, 0, 4],
+            }]
+          : []),
+        ...(officialManual.lastChecked
+          ? [{ text: `Última revisión del enlace: ${officialManual.lastChecked}`, margin: [0, 0, 0, 4] }]
+          : []),
+      ]
+    : [];
 
   const docDefinition = {
     pageSize: 'A4',
@@ -90,6 +125,9 @@ export const exportGuide = (manual) => {
             margin: [0, 0, 0, 4],
           }))
         : [{ text: 'Sin enlaces oficiales disponibles' }]),
+
+      ...officialManualBlock,
+
       {
         text: 'Resumen adicional',
         fontSize: 12,
@@ -106,13 +144,14 @@ export const exportGuide = (manual) => {
             generatedAt
               ? dayjs(generatedAt).format('DD/MM/YYYY HH:mm')
               : dayjs().format('DD/MM/YYYY HH:mm')
-          }`,
+          }\n` +
+          `Nota: Verifica siempre la versión vigente del manual en la fuente oficial.`,
       },
     ],
     footer: function () {
       return {
         margin: [40, 10, 40, 0],
-        text: 'WeAreExporters (www.weareexporters.com) — Desbloquea el potencial de tu producto',
+        text: 'WeAreExporters — Desbloquea el potencial de tu producto',
         alignment: 'center',
         color: '#045023',
         fontSize: 9,
