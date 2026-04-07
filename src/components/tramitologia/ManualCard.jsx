@@ -10,6 +10,7 @@ export default function ManualCard({ manual, onDownloadPdf }) {
   const authority = safeManual.authority || '—';
   const sla = safeManual.sla || '—';
   const fees = safeManual.fees || '—';
+  const officialManual = safeManual.officialManual || null;
 
   const requirements = Array.isArray(safeManual.requirements) ? safeManual.requirements : [];
   const steps = Array.isArray(safeManual.steps) ? safeManual.steps : [];
@@ -33,7 +34,6 @@ export default function ManualCard({ manual, onDownloadPdf }) {
       </header>
 
       <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Requisitos */}
         <section className="md:col-span-1">
           <h4 className="font-bold text-gray-900 mb-2">Requisitos</h4>
 
@@ -64,9 +64,33 @@ export default function ManualCard({ manual, onDownloadPdf }) {
               <p className="text-sm text-gray-700">{fees}</p>
             </div>
           </div>
+
+          {officialManual && (
+            <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-3">
+              <h4 className="font-bold text-green-800 mb-1">Guía oficial de usuario</h4>
+              <p className="text-sm text-gray-700">
+                <strong>{officialManual.label || 'Manual oficial'}</strong>
+              </p>
+              <p className="text-sm text-gray-700 mt-1">
+                Dependencia: {officialManual.agency || '—'}
+              </p>
+              {officialManual.notes ? (
+                <p className="text-sm text-gray-600 mt-1">{officialManual.notes}</p>
+              ) : null}
+              {officialManual.url ? (
+                <a
+                  href={officialManual.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block mt-2 text-sm font-medium text-green-700 underline break-all"
+                >
+                  Abrir guía oficial
+                </a>
+              ) : null}
+            </div>
+          )}
         </section>
 
-        {/* Pasos */}
         <section className="md:col-span-2">
           <h4 className="font-bold text-gray-900 mb-2">Pasos</h4>
 
@@ -110,32 +134,29 @@ export default function ManualCard({ manual, onDownloadPdf }) {
 
           <div className="mt-5">
             <button
-  onClick={onDownloadPdf}
-  className="inline-flex items-center gap-2 px-5 py-3 rounded-lg font-medium text-sm md:text-base bg-green-100 text-green-700 hover:bg-green-200 active:scale-[0.98] transition-all duration-200"
->
-  Descargar PDF
+              type="button"
+              onClick={onDownloadPdf}
+              disabled={!manual}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg font-medium text-sm md:text-base bg-green-100 text-green-700 hover:bg-green-200 active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Descargar PDF
 
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-  >
-    <path
-      d="M8 12l4 4 4-4M12 16V4"
-      stroke="#047857"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M20 20H4"
-      stroke="#047857"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-  </svg>
-</button>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M8 12l4 4 4-4M12 16V4"
+                  stroke="#047857"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M20 20H4"
+                  stroke="#047857"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
           </div>
         </section>
       </div>
