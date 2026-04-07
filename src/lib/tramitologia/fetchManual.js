@@ -1,5 +1,5 @@
 import { supabase } from '../../supabaseClient';
-import { FALLBACK_MANUALS, OFFICIAL_LINKS } from './constants';
+import { FALLBACK_MANUALS, OFFICIAL_LINKS, OFFICIAL_USER_GUIDES } from './constants';
 
 export async function fetchManual({ country, procedure }) {
   try {
@@ -22,6 +22,10 @@ export async function fetchManual({ country, procedure }) {
       sla: data?.sla || '',
       fees: data?.fees || '',
       updated_at: data?.updated_at || null,
+      officialManual:
+        data?.official_manual ||
+        OFFICIAL_USER_GUIDES?.[country]?.[procedure] ||
+        null,
     };
   } catch (err) {
     console.warn('fetchManual fallback local:', err?.message || err);
@@ -44,6 +48,7 @@ export async function fetchManual({ country, procedure }) {
       authority: 'Autoridad competente del país',
       sla: 'Variable',
       fees: 'Sujeto a revisión',
+      officialManual: OFFICIAL_USER_GUIDES?.[country]?.[procedure] || null,
     };
   }
 }
