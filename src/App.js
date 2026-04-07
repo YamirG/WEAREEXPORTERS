@@ -6,9 +6,6 @@ import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 import NavbarHeader from './components/NavbarHeader';
 import HeroSection from './components/HeroSection';
-import SearchProductSection from './components/SearchProductSection';
-import RequirementsSection from './components/RequirementsSection';
-import BuyersSection from './components/BuyersSection';
 import FeaturesSection from './components/FeaturesSection';
 import PricingSection from './components/PricingSection';
 import FaqSection from './components/FaqSection';
@@ -32,15 +29,11 @@ const MainContent = ({
   handleCloseModals,
   handleSelectPlan,
 }) => {
-  const [currentView, setCurrentView] = useState('home');
+  const [, setCurrentView] = useState('home');
 
   const handleGetStarted = () => {
-    setCurrentView('search');
-    document.getElementById('search-product')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleLimitReached = () => {
-    onRegisterClick();
+    setCurrentView('home');
+    document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -49,9 +42,6 @@ const MainContent = ({
 
       <main>
         <HeroSection onGetStarted={handleGetStarted} />
-        <SearchProductSection onLimitReached={handleLimitReached} />
-        <RequirementsSection onLimitReached={handleLimitReached} />
-        <BuyersSection onLimitReached={handleLimitReached} />
         <FeaturesSection />
         <PricingSection onOpenRegister={onRegisterClick} />
       </main>
@@ -167,7 +157,7 @@ const AppInner = () => {
       localStorage.setItem('isPremiumUser', 'true');
       localStorage.setItem('queryCount', '0');
       handleCloseModals();
-      navigate('/premiumdashboard'); // ✅ SPA limpio
+      navigate('/premiumdashboard');
       return;
     }
 
@@ -191,12 +181,10 @@ const AppInner = () => {
 };
 
 const App = () => {
-  // ✅ reCAPTCHA v3 Site Key desde el entorno
   const RECAPTCHA_V3_SITE_KEY =
-  process.env.REACT_APP_RECAPTCHA_V3_SITE_KEY ||
-  process.env.REACT_APP_RECAPTCHA_SITE_KEY ||
-  '';
-
+    process.env.REACT_APP_RECAPTCHA_V3_SITE_KEY ||
+    process.env.REACT_APP_RECAPTCHA_SITE_KEY ||
+    '';
 
   const hasValidRecaptchaKey =
     typeof RECAPTCHA_V3_SITE_KEY === 'string' && RECAPTCHA_V3_SITE_KEY.length > 30;
@@ -225,7 +213,6 @@ const App = () => {
           <AppInner />
         </GoogleReCaptchaProvider>
       ) : (
-        // ✅ fallback sin provider (la landing y rutas siguen existiendo)
         <AppInner />
       )}
     </PayPalScriptProvider>
@@ -233,4 +220,3 @@ const App = () => {
 };
 
 export default App;
-
