@@ -14,7 +14,7 @@ const PricingSection = ({ onOpenRegister }) => {
         'Encuentra clientes y distribuidores reales en mercados internacionales',
         'Accede a guías claras sobre trámites y requisitos de exportación',
         'Valida demanda con estudios de mercado automatizados',
-        'Lanza campañas de prospección con prospectos verificados (1 al mes incluido)',
+        'Genera campañas para atraer compradores de otro país, prospectos nuevos cada mes (1 campaña al mes incluido)',
         'Resuelve dudas al instante 24/7 con nuestro Chat IA experto',
         'Recibe asesorías por videollamada con especialistas en comercio exterior',
         'Capacítate con talleres y cursos continuos para exportadores',
