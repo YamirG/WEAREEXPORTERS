@@ -42,6 +42,11 @@ const FAQ_ITEMS = [
       "El primer cargo se realiza automáticamente al terminar los 7 días de prueba. El método de pago que registres quedará asociado a la suscripción.",
   },
   {
+    question: "¿Cuánto cuesta la suscripción Premium?",
+    answer:
+      "La suscripción Premium tiene un costo de $49 USD al mes. Primero obtienes 7 días de prueba y, si decides continuar, el primer cobro se realiza automáticamente al finalizar ese periodo.",
+  },
+  {
     question: "¿Puedo cancelar antes de que termine la prueba?",
     answer:
       "Sí. Puedes cancelar antes de que concluyan los 7 días para evitar el primer cargo, de lo contrario una vez hecho el cobro no se podra realizar reembolso de acuerdo con el proceso de cancelación mostrado durante tu registro.",
@@ -1308,9 +1313,9 @@ export default function LandingDiagnosticoExportador() {
                 </p>
 
                 <p className="mt-2 text-xs leading-relaxed text-white/80">
-                  Al finalizar el periodo de prueba, la suscripción se
-                  cobrará automáticamente al método de pago registrado,
-                  salvo que canceles antes.
+                  Después de la prueba, la suscripción tendrá un costo de
+                  $49 USD al mes y se cobrará automáticamente al método de
+                  pago registrado, salvo que canceles antes.
                 </p>
 
                 <button
@@ -1451,9 +1456,106 @@ export default function LandingDiagnosticoExportador() {
               Continuar con mi prueba de 7 días
             </button>
             <p className="mt-3 text-xs text-green-900/70">
-              El cobro se realiza automáticamente al finalizar la prueba,
-              salvo cancelación previa.
+              Después de la prueba: $49 USD al mes. El cobro se realiza
+              automáticamente, salvo cancelación previa.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Precio de la suscripción */}
+      <section className="mx-auto max-w-6xl px-4 py-14">
+        <div className="overflow-hidden rounded-3xl border border-green-200 bg-white shadow-xl">
+          <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="bg-gradient-to-br from-green-700 via-green-600 to-emerald-500 p-7 text-white md:p-10">
+              <span className="inline-flex rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-extrabold">
+                Plan Premium
+              </span>
+
+              <h2 className="mt-5 text-3xl font-black tracking-tight md:text-4xl">
+                Empieza con 7 días de prueba.
+              </h2>
+
+              <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/90 md:text-base">
+                Conoce el Panel Premium, prueba sus herramientas y decide
+                antes de que se realice el primer cobro.
+              </p>
+
+              <div className="mt-7 rounded-3xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm">
+                <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-white/75">
+                  Después de la prueba
+                </p>
+
+                <div className="mt-2 flex flex-wrap items-end gap-2">
+                  <span className="text-4xl font-black md:text-5xl">
+                    $49 USD
+                  </span>
+                  <span className="pb-1 text-sm font-bold text-white/80">
+                    al mes
+                  </span>
+                </div>
+
+                <p className="mt-3 text-xs leading-relaxed text-white/80">
+                  Primer cobro al finalizar los 7 días. Puedes cancelar
+                  antes de que termine la prueba.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={openRegister}
+                className="mt-6 min-h-[52px] w-full rounded-2xl bg-white px-6 py-4 text-sm font-black text-green-700 shadow-lg transition hover:bg-green-50 sm:w-auto"
+              >
+                Iniciar mi prueba de 7 días
+              </button>
+            </div>
+
+            <div className="p-7 md:p-10">
+              <span className="inline-flex rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
+                Incluido en tu suscripción
+              </span>
+
+              <h3 className="mt-4 text-2xl font-black tracking-tight text-gray-950 md:text-3xl">
+                Todo lo necesario para avanzar con mayor claridad.
+              </h3>
+
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                {[
+                  "Diagnósticos y consultas de mercados",
+                  "Requisitos de exportación e importación",
+                  "Compradores internacionales",
+                  "Prospección masiva",
+                  "IA especializada",
+                  "Capacitación",
+                  "Asesoría y soporte",
+                  "Actualizaciones y nuevas funciones",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4"
+                  >
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-600 text-xs font-black text-white">
+                      ✓
+                    </span>
+
+                    <span className="text-sm font-bold leading-relaxed text-gray-800">
+                      {item}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-extrabold text-amber-900">
+                  Sin cobro durante los primeros 7 días.
+                </p>
+
+                <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                  La suscripción se cobra automáticamente al finalizar la
+                  prueba, salvo que canceles antes.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1512,8 +1614,8 @@ export default function LandingDiagnosticoExportador() {
           </button>
 
           <p className="mt-4 text-xs text-white/55">
-            Al finalizar los 7 días se realizará el cargo automático a tu
-            tarjeta. Cancela antes si decides no continuar.
+            Después de los 7 días: $49 USD al mes. El cargo se realizará
+            automáticamente a tu tarjeta, salvo que canceles antes.
           </p>
         </div>
       </section>
@@ -1582,7 +1684,7 @@ export default function LandingDiagnosticoExportador() {
           Iniciar prueba gratis de 7 días
         </button>
         <p className="mt-1.5 text-center text-[10px] leading-tight text-gray-500">
-          Cargo automático al finalizar la prueba. Cancela antes si decides no continuar.
+          Después de la prueba: $49 USD al mes. Cancela antes si decides no continuar.
         </p>
       </div>
         </>
