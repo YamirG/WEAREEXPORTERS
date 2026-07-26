@@ -648,9 +648,11 @@ export default function LandingDiagnosticoExportador() {
         </div>
       </section>
 
-      {/* Formulario inicial */}
+      {/* Todo el contenido posterior al video se activa después de un minuto */}
       {showDiagnostic && (
-        <section className="mx-auto max-w-6xl px-4 pt-10 sm:px-6 md:pt-12">
+        <>
+          {/* Formulario inicial */}
+          <section className="mx-auto max-w-6xl px-4 pt-10 sm:px-6 md:pt-12">
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6 md:p-8">
             <div className="text-center">
               <span className="inline-flex rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
@@ -807,10 +809,9 @@ export default function LandingDiagnosticoExportador() {
               </div>
             </div>
           </div>
-        </section>
-      )}
+          </section>
 
-      {/* Mercados descubiertos */}
+          {/* Mercados descubiertos */}
       {marketResult && (
         <section
           id="mercados-descubiertos"
@@ -1584,6 +1585,8 @@ export default function LandingDiagnosticoExportador() {
           Cargo automático al finalizar la prueba. Cancela antes si decides no continuar.
         </p>
       </div>
+        </>
+      )}
 
       <FreeDiagnosticLimitModal
         isOpen={showFreeLimitModal}
