@@ -10,9 +10,12 @@ const DEFAULT_COUNTRIES = [
 // 🔧 Asegúrate que este bucket exista en Supabase Storage
 const BUCKET_NAME = 'prospect-photos';
 
-// ----------- UI helpers (coherentes con ConsultasTab) -----------
+// ✅ Administrador autorizado para visualizar información interna de integraciones
+const ADMIN_ID = '91e330bb-4133-4246-abcc-4f470495b7f9';
+
+// ----------- UI helpers -----------
 const Spinner = () => (
-  <svg className="h-4 w-4 animate-spin text-green-600" viewBox="0 0 24 24">
+  <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
   </svg>
@@ -21,8 +24,8 @@ const Spinner = () => (
 const Button = ({ children, className = '', ...props }) => (
   <button
     className={
-      'h-[42px] inline-flex items-center gap-2 px-4 rounded-lg text-sm font-medium transition-colors ' +
-      'bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed ' +
+      'h-[46px] inline-flex items-center justify-center gap-2 px-5 rounded-2xl text-sm font-bold transition-all ' +
+      'bg-[#045023] hover:bg-green-800 text-white disabled:opacity-50 disabled:cursor-not-allowed ' +
       className
     }
     {...props}
@@ -34,8 +37,8 @@ const Button = ({ children, className = '', ...props }) => (
 const ButtonSecondary = ({ children, className = '', ...props }) => (
   <button
     className={
-      'h-[42px] inline-flex items-center gap-2 px-4 rounded-lg text-sm font-medium transition-colors ' +
-      'bg-gray-100 hover:bg-gray-200 text-gray-800 ' +
+      'h-[46px] inline-flex items-center justify-center gap-2 px-5 rounded-2xl text-sm font-bold transition-all ' +
+      'bg-gray-100 hover:bg-gray-200 text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed ' +
       className
     }
     {...props}
@@ -44,18 +47,48 @@ const ButtonSecondary = ({ children, className = '', ...props }) => (
   </button>
 );
 
-const Card = ({ title, subtitle, children, icon }) => (
-  <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+const Card = ({ title, subtitle, children, icon, className = '' }) => (
+  <div className={`bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden ${className}`}>
     {(title || subtitle) && (
-      <div className="px-4 md:px-5 py-4 border-b border-gray-100 flex items-start gap-3">
-        {icon && <div className="text-green-600 mt-0.5">{icon}</div>}
+      <div className="px-5 md:px-6 py-5 border-b border-gray-100 flex items-start gap-3">
+        {icon && <div className="text-green-700 mt-0.5">{icon}</div>}
         <div>
-          <div className="text-base md:text-lg font-semibold text-gray-800">{title}</div>
-          {subtitle && <div className="text-sm text-gray-500 mt-0.5">{subtitle}</div>}
+          <div className="text-lg md:text-xl font-extrabold text-gray-900">{title}</div>
+          {subtitle && <div className="text-sm text-gray-500 mt-1">{subtitle}</div>}
         </div>
       </div>
     )}
-    <div className="p-4 md:p-5">{children}</div>
+    <div className="p-5 md:p-6">{children}</div>
+  </div>
+);
+
+const Badge = ({ children, variant = 'green' }) => {
+  const styles = {
+    green: 'bg-green-100 text-green-700',
+    gray: 'bg-gray-100 text-gray-600',
+    blue: 'bg-blue-100 text-blue-700',
+    yellow: 'bg-yellow-100 text-yellow-700',
+    red: 'bg-red-100 text-red-700',
+  };
+
+  return (
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${styles[variant] || styles.green}`}>
+      {children}
+    </span>
+  );
+};
+
+const AgentStatusBadge = ({ status }) => {
+  if (status === 'Listo') return <Badge variant="green">Listo</Badge>;
+  if (status === 'En integración') return <Badge variant="blue">En integración</Badge>;
+  if (status === 'Próximamente') return <Badge variant="yellow">Próximamente</Badge>;
+  return <Badge variant="gray">Pendiente</Badge>;
+};
+
+const Field = ({ label, children }) => (
+  <div>
+    <label className="block text-sm font-bold text-gray-700 mb-1">{label}</label>
+    {children}
   </div>
 );
 
@@ -95,6 +128,37 @@ const ProspeccionTab = ({
 
   // Archivos locales (cuando no hay manejador del padre)
   const [localFiles, setLocalFiles] = useState([]);
+
+  // Wizard UI
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
+
+  // Visibilidad exclusiva para información interna de integraciones
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Verifica si el usuario autenticado es el administrador autorizado.
+  // Esta validación solo controla visibilidad; no modifica campañas, cartera ni Supabase.
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (error) throw error;
+
+        if (mounted) {
+          setIsAdmin(data?.user?.id === ADMIN_ID);
+        }
+      } catch (error) {
+        console.warn('No fue posible verificar el acceso de administrador:', error?.message || error);
+        if (mounted) setIsAdmin(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Si el padre cambia props externamente, sincronizamos
   useEffect(() => { if (typeof companyName === 'string') setLocalCompanyName(companyName); }, [companyName]);
@@ -406,6 +470,8 @@ const ProspeccionTab = ({
       setSubmitOk('¡Campaña generada! Se descontaron $50, se subieron tus fotos y se envió solicitud al equipo de Vendedores Internacionales.');
       // Limpieza local opcional
       setLocalFiles([]);
+      setWizardOpen(false);
+      setWizardStep(1);
     } catch (err) {
       setSubmitError(`No se pudo generar la campaña: ${err.message}`);
     } finally {
@@ -423,183 +489,227 @@ const ProspeccionTab = ({
     uploadPhotosIfAny
   ]);
 
-  // ---------- Render (mismo estilo que ConsultasTab) ----------
+  const selectedFilesForUi = (Array.isArray(productPhotos) && productPhotos.length) ? productPhotos : localFiles;
+  const balanceNumber = Number(walletBalance ?? 0);
+
+  const AGENTS = [
+    { name: 'Agente 1 — Análisis del producto', status: 'Listo' },
+    { name: 'Agente 2 — Inteligencia de mercado', status: 'Listo' },
+    { name: 'Agente 3 — Buyer Persona IA', status: 'En integración' },
+    { name: 'Agente 4 — Creativos publicitarios IA', status: 'Próximamente' },
+    { name: 'Agente 5 — Publicación de campaña', status: 'Pendiente' },
+    { name: 'Agente 6 — Respuesta automática a interesados', status: 'Pendiente' },
+    { name: 'Agente 7 — CRM y seguimiento', status: 'Pendiente' },
+    { name: 'Agente 8 — Optimización', status: 'Pendiente' },
+    { name: 'Agente 9 — Director Comercial IA', status: 'Pendiente' },
+    { name: 'Agente 10 — Ejecutivo de Comercio Internacional IA', status: 'En integración' },
+  ];
+
   return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-      {/* Header con gradiente */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-500 px-5 md:px-6 py-6">
-        <h2 className="text-white text-2xl md:text-3xl font-bold">Prospección Masiva de Compradores</h2>
-        <p className="text-emerald-50 mt-1">
-          Genera una campaña enfocada y recibe prospectos verificados. Costo por campaña: <b>$50</b>.
-        </p>
-        <div className="mt-3 inline-flex items-center gap-2 bg-emerald-600/20 text-white rounded-full px-3 py-1 text-sm">
-          Billetera: <span className="font-semibold">${Number(walletBalance ?? 0).toFixed(2)}</span>
+    <div className="space-y-6">
+      {/* Dashboard principal */}
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div className="xl:col-span-2">
+          <Card className="p-6 md:p-8 relative overflow-hidden">
+            <div className="absolute right-6 top-6 h-32 w-32 rounded-full bg-green-100 blur-2xl opacity-70" />
+
+            <div className="relative">
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <Badge>Equipo Comercial IA</Badge>
+                <span className="text-sm text-gray-500">Prospección internacional asistida por IA</span>
+              </div>
+
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+                Prospección Masiva de Compradores
+              </h2>
+
+              <p className="text-gray-600 mt-3 max-w-3xl leading-relaxed">
+                Activa un equipo comercial impulsado por IA para encontrar compradores potenciales,
+                dar seguimiento inicial y organizar oportunidades comerciales en el país objetivo.
+              </p>
+
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setWizardOpen(true);
+                    setWizardStep(1);
+                    setSubmitError('');
+                    setSubmitOk('');
+                  }}
+                  className="w-full sm:w-auto bg-[#045023] hover:bg-green-800"
+                >
+                  🚀 Contratar Equipo Comercial IA
+                </Button>
+
+                <ButtonSecondary type="button" className="w-full sm:w-auto">
+                  ▶ Ver tutorial
+                </ButtonSecondary>
+              </div>
+            </div>
+          </Card>
         </div>
-      </div>
 
-      <div className="p-4 md:p-6 space-y-8">
-        {/* Formulario principal */}
-        <Card
-          title="1) Datos de tu campaña"
-          subtitle="Completa la información. Puedes adjuntar hasta 5 fotos del producto."
-          icon={<span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100">📝</span>}
-        >
-          {submitError && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{submitError}</div>
-          )}
-          {submitOk && (
-            <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-700 text-sm">{submitOk}</div>
-          )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-5">
+          <Card className="p-5 bg-gradient-to-br from-[#045023] to-green-600 text-white border-0">
+            <p className="text-sm text-white/80">Saldo disponible</p>
+            <h3 className="text-4xl font-extrabold mt-1">${balanceNumber.toFixed(2)}</h3>
+            <p className="text-sm text-white/80 mt-1">USD para campañas activas</p>
+          </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="company-name" className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre de empresa
-              </label>
-              <input
-                type="text" id="company-name"
-                value={localCompanyName}
-                onChange={(e) => onCompanyName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-                required
-              />
+          <Card className="p-5">
+            <p className="text-sm text-gray-500">Estado del Equipo Comercial IA</p>
+            <h3 className="text-xl font-extrabold text-gray-900 mt-2">En integración</h3>
+            <p className="text-sm text-gray-500 mt-1">Agentes conectándose por etapas.</p>
+          </Card>
+        </div>
+      </section>
+
+      {submitError && <div className="p-4 rounded-2xl bg-red-50 text-red-700 text-sm">{submitError}</div>}
+      {submitOk && <div className="p-4 rounded-2xl bg-green-50 text-green-700 text-sm">{submitOk}</div>}
+
+      {/* Métricas usuario */}
+      <section className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        {[
+          ['🌎', 'País objetivo', localCountry || 'Sin definir'],
+          ['🚀', 'Campañas activas', submitOk ? '1' : '0'],
+          ['👥', 'Prospectos encontrados', sheetProspects.length || '0'],
+          ['⭐', 'Prospectos calificados', sheetProspects.filter((p) => p.status === 'Calificado').length || '0'],
+        ].map(([icon, label, value]) => (
+          <Card key={label} className="p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm text-gray-500">{label}</p>
+                <p className="text-2xl md:text-3xl font-extrabold text-gray-900 mt-2">{value}</p>
+              </div>
+              <div className="h-11 w-11 rounded-2xl bg-green-50 flex items-center justify-center text-xl">
+                {icon}
+              </div>
             </div>
+          </Card>
+        ))}
+      </section>
 
-            <div>
-              <label htmlFor="product-export" className="block text-sm font-medium text-gray-700 mb-1">
-                Producto a Exportar
-              </label>
-              <input
-                type="text" id="product-export"
-                value={localProductToExport}
-                onChange={(e) => onProductToExport(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-                required
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <Card title="Estado de campaña" subtitle="Avance visible para el usuario" icon={<span>📊</span>}>
+          <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-6 items-center">
+            <div className="relative h-40 w-40 mx-auto">
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{ background: 'conic-gradient(#22C55E 72deg, #E5E7EB 0deg)' }}
               />
-            </div>
-
-            <div>
-              <label htmlFor="target-country" className="block text-sm font-medium text-gray-700 mb-1">
-                País meta
-              </label>
-              <select
-                id="target-country"
-                value={localCountry}
-                onChange={(e) => onCountry(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-                required
-              >
-                <option value="">Selecciona un país</option>
-                {countryOptions.map((country, index) => (
-                  <option key={index} value={country}>{country}</option>
-                ))}
-              </select>
-              <div className="mt-1">
-                {localCountry
-                  ? <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">País seleccionado</span>
-                  : null}
+              <div className="absolute inset-4 rounded-full bg-white flex flex-col items-center justify-center">
+                <span className="text-3xl font-extrabold text-green-700">2/10</span>
+                <span className="text-xs text-gray-500 mt-1">Agentes activos</span>
               </div>
             </div>
 
-            <div>
-              <label htmlFor="company-website" className="block text-sm font-medium text-gray-700 mb-1">
-                Página web de la empresa
-              </label>
-              <input
-                type="url" id="company-website"
-                value={localCompanyWebsite}
-                onChange={(e) => onCompanyWebsite(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-                required
-              />
-            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs text-gray-500">País objetivo</p>
+                <p className="font-extrabold text-gray-900">{localCountry || 'Aún no definido'}</p>
+              </div>
 
-            <div className="md:col-span-2">
-              <label htmlFor="product-photos" className="block text-sm font-medium text-gray-700 mb-1">
-                Adjuntar fotos del producto (opcional, máx. 5)
-              </label>
-              <input
-                type="file" id="product-photos" multiple accept="image/*"
-                onChange={(e) => {
-                  if (typeof handleFileChange === 'function') {
-                    handleFileChange(e);
-                  } else {
-                    const files = Array.from(e.target.files || []);
-                    setLocalFiles(files);
-                  }
-                }}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-              />
-              {(() => {
-                const arr = (Array.isArray(productPhotos) && productPhotos.length) ? productPhotos : localFiles;
-                return Array.isArray(arr) && arr.length > 0 ? (
-                  <p className="text-sm text-gray-500 mt-1">
-                    Archivos seleccionados: {arr.map((f) => String(f.name || f?.path || 'archivo')).join(', ')}
-                  </p>
-                ) : null;
-              })()}
-            </div>
+              <div>
+                <p className="text-xs text-gray-500">Producto</p>
+                <p className="font-extrabold text-gray-900">{localProductToExport || 'Aún no definido'}</p>
+              </div>
 
-            <div className="md:col-span-2">
-              <label htmlFor="facebook-link" className="block text-sm font-medium text-gray-700 mb-1">
-                Link de Facebook de la empresa (opcional)
-              </label>
-              <input
-                type="url" id="facebook-link"
-                value={localFacebookLink}
-                onChange={(e) => onFacebookLink(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-              />
+              <div>
+                <p className="text-xs text-gray-500">Equipo Comercial IA</p>
+                <p className="font-extrabold text-green-700">En integración</p>
+              </div>
             </div>
-          </div>
-
-          <div className="mt-5">
-            <Button onClick={onGenerateCampaign} disabled={submitting}>
-              {submitting ? <><Spinner /> Generando…</> : <>Generar Campaña de Prospección</>}
-            </Button>
           </div>
         </Card>
 
-        {/* Google Sheet */}
-        <Card
-          title="2) Tus Prospectos Calificados"
-          subtitle="Resultados visibles de 8–10 días hábiles después de generar tu campaña."
-          icon={<span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100">📊</span>}
-        >
-          <div className="mb-3 grid gap-2 md:grid-cols-[1fr_auto] items-end">
-            <div>
-              <label htmlFor="filter-email" className="block text-sm font-medium text-gray-700 mb-1">
-                Ingresa el email con el que te registraste para ver tus prospectos
-              </label>
-              <input
-                id="filter-email"
-                type="email"
-                value={filterEmail}
-                onChange={(e) => setFilterEmail(e.target.value)}
-                placeholder="usuario@dominio.com"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-              />
-            </div>
-            <ButtonSecondary onClick={() => fetchSheet()}>Refrescar</ButtonSecondary>
+        <Card title="Actividad reciente" subtitle="Eventos visibles de avance" icon={<span>⚡</span>}>
+          <div className="space-y-4">
+            {[
+              ['Análisis del producto', 'Listo para integrarse con los datos de campaña.', 'Listo'],
+              ['Inteligencia de mercado', 'Preparado para identificar señales del país objetivo.', 'Listo'],
+              ['Buyer Persona IA', 'Construcción del perfil ideal del comprador.', 'En integración'],
+              ['Creativos publicitarios IA', 'Disponible en una siguiente fase.', 'Próximamente'],
+            ].map(([title, desc, status]) => (
+              <div key={title} className="flex gap-4">
+                <div className="h-10 w-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
+                  ✓
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-extrabold text-gray-900 text-sm">{title}</p>
+                    <AgentStatusBadge status={status} />
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">{desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
+        </Card>
+      </section>
 
-          {sheetLoading ? (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Spinner /> Cargando datos…
-            </div>
-          ) : sheetError ? (
-            <div className="p-3 rounded-lg bg-yellow-50 text-yellow-800 text-sm">{sheetError}</div>
-          ) : sheetProspects.length === 0 ? (
-            <p className="text-gray-500 text-sm">No hay prospectos para ese email.</p>
-          ) : (
+      {/* Agentes IA: información interna visible únicamente para el administrador */}
+      {isAdmin && (
+        <Card title="Avance de Agentes IA" subtitle="Vista informativa. Algunas funciones aún están en integración." icon={<span>🤖</span>}>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {AGENTS.map((agent, index) => (
+              <div key={agent.name} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-extrabold text-gray-900">{agent.name}</p>
+                    <p className="text-xs text-gray-500 mt-1">Etapa {index + 1}</p>
+                  </div>
+                  <AgentStatusBadge status={agent.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Google Sheet */}
+      <Card
+        title="Tus Prospectos Calificados"
+        subtitle="Resultados visibles de 8–10 días hábiles después de activar tu campaña."
+        icon={<span>📊</span>}
+      >
+        <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto] items-end">
+          <Field label="Ingresa el email con el que te registraste para ver tus prospectos">
+            <input
+              id="filter-email"
+              type="email"
+              value={filterEmail}
+              onChange={(e) => setFilterEmail(e.target.value)}
+              placeholder="usuario@dominio.com"
+              className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
+            />
+          </Field>
+
+          <ButtonSecondary onClick={() => fetchSheet()}>Refrescar</ButtonSecondary>
+        </div>
+
+        {sheetLoading ? (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <svg className="h-4 w-4 animate-spin text-green-700" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            Cargando datos…
+          </div>
+        ) : sheetError ? (
+          <div className="p-3 rounded-2xl bg-yellow-50 text-yellow-800 text-sm">{sheetError}</div>
+        ) : sheetProspects.length === 0 ? (
+          <p className="text-gray-500 text-sm">No hay prospectos para ese email.</p>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-gray-200">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 md:px-6 md:py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nombre</th>
-                    <th className="px-4 py-2 md:px-6 md:py-3 text-left text-xs font-semibold text-gray-600 uppercase">Contacto</th>
-                    <th className="px-4 py-2 md:px-6 md:py-3 text-left text-xs font-semibold text-gray-600 uppercase">Estado</th>
-                    <th className="px-4 py-2 md:px-6 md:py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
+                    <th className="px-4 py-3 md:px-6 text-left text-xs font-bold text-gray-600 uppercase">Nombre</th>
+                    <th className="px-4 py-3 md:px-6 text-left text-xs font-bold text-gray-600 uppercase">Contacto</th>
+                    <th className="px-4 py-3 md:px-6 text-left text-xs font-bold text-gray-600 uppercase">Estado</th>
+                    <th className="px-4 py-3 md:px-6 text-left text-xs font-bold text-gray-600 uppercase">Fecha</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
@@ -627,7 +737,7 @@ const ProspeccionTab = ({
                       </td>
                       <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm">
                         <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
                             p.status === 'Nuevo'
                               ? 'bg-blue-100 text-blue-800'
                               : p.status === 'Contactado'
@@ -646,12 +756,253 @@ const ProspeccionTab = ({
                 </tbody>
               </table>
             </div>
-          )}
-        </Card>
-      </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Wizard Modal */}
+      {wizardOpen && (
+        <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 md:p-6">
+          <div className="bg-white w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-3xl shadow-2xl">
+            <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-5 md:px-6 py-4 rounded-t-3xl">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Badge>Wizard de Prospección</Badge>
+                  <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 mt-2">
+                    Contratar Equipo Comercial IA
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Completa los datos de tu campaña. Se usará la misma lógica actual de activación.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setWizardOpen(false)}
+                  className="h-10 w-10 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-4 grid grid-cols-4 gap-2">
+                {[1, 2, 3, 4].map((step) => (
+                  <button
+                    key={step}
+                    type="button"
+                    onClick={() => setWizardStep(step)}
+                    className={`h-2 rounded-full ${wizardStep >= step ? 'bg-[#22C55E]' : 'bg-gray-200'}`}
+                    aria-label={`Paso ${step}`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="p-5 md:p-6">
+              {submitError && <div className="mb-4 p-3 rounded-2xl bg-red-50 text-red-700 text-sm">{submitError}</div>}
+              {submitOk && <div className="mb-4 p-3 rounded-2xl bg-green-50 text-green-700 text-sm">{submitOk}</div>}
+
+              {wizardStep === 1 && (
+                <div className="space-y-5">
+                  <div>
+                    <h4 className="text-xl font-extrabold text-gray-900">1. Información de empresa</h4>
+                    <p className="text-sm text-gray-500 mt-1">Estos datos ayudan a entender tu oferta comercial.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Field label="Nombre de empresa">
+                      <input
+                        type="text"
+                        id="company-name"
+                        value={localCompanyName}
+                        onChange={(e) => onCompanyName(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
+                        required
+                      />
+                    </Field>
+
+                    <Field label="Producto a Exportar">
+                      <input
+                        type="text"
+                        id="product-export"
+                        value={localProductToExport}
+                        onChange={(e) => onProductToExport(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
+                        required
+                      />
+                    </Field>
+
+                    <Field label="Página web de la empresa">
+                      <input
+                        type="url"
+                        id="company-website"
+                        value={localCompanyWebsite}
+                        onChange={(e) => onCompanyWebsite(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
+                        required
+                      />
+                    </Field>
+
+                    <Field label="Facebook / Instagram / Red social de la empresa">
+                      <input
+                        type="url"
+                        id="facebook-link"
+                        value={localFacebookLink}
+                        onChange={(e) => onFacebookLink(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
+                      />
+                    </Field>
+                  </div>
+                </div>
+              )}
+
+              {wizardStep === 2 && (
+                <div className="space-y-5">
+                  <div>
+                    <h4 className="text-xl font-extrabold text-gray-900">2. Mercado objetivo</h4>
+                    <p className="text-sm text-gray-500 mt-1">Selecciona el país destino donde quieres prospectar compradores.</p>
+                  </div>
+
+                  <Field label="País meta">
+                    <select
+                      id="target-country"
+                      value={localCountry}
+                      onChange={(e) => onCountry(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
+                      required
+                    >
+                      <option value="">Selecciona un país</option>
+                      {countryOptions.map((country, index) => (
+                        <option key={index} value={country}>{country}</option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  {localCountry ? (
+                    <div className="rounded-3xl bg-green-50 border border-green-100 p-5">
+                      <p className="text-sm text-green-700 font-bold">País seleccionado</p>
+                      <p className="text-2xl font-extrabold text-gray-900 mt-1">{localCountry}</p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              {wizardStep === 3 && (
+                <div className="space-y-5">
+                  <div>
+                    <h4 className="text-xl font-extrabold text-gray-900">3. Fotografías del producto</h4>
+                    <p className="text-sm text-gray-500 mt-1">Puedes adjuntar hasta 5 imágenes del producto.</p>
+                  </div>
+
+                  <label className="block rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-green-50 hover:border-green-200 transition p-8 text-center cursor-pointer">
+                    <div className="mx-auto h-14 w-14 rounded-2xl bg-green-100 text-green-700 flex items-center justify-center text-2xl">
+                      +
+                    </div>
+                    <p className="mt-3 text-sm font-bold text-gray-900">Adjuntar fotos del producto</p>
+                    <p className="text-sm text-gray-500 mt-1">Opcional, máximo 5 imágenes.</p>
+
+                    <input
+                      type="file"
+                      id="product-photos"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (typeof handleFileChange === 'function') {
+                          handleFileChange(e);
+                        } else {
+                          const files = Array.from(e.target.files || []);
+                          setLocalFiles(files);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {Array.isArray(selectedFilesForUi) && selectedFilesForUi.length > 0 ? (
+                    <div className="rounded-2xl border border-gray-100 bg-white p-4">
+                      <p className="text-sm font-bold text-gray-900">Archivos seleccionados</p>
+                      <p className="text-sm text-gray-500 mt-1 break-words">
+                        {selectedFilesForUi.map((f) => String(f.name || f?.path || 'archivo')).join(', ')}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              {wizardStep === 4 && (
+                <div className="space-y-5">
+                  <div>
+                    <h4 className="text-xl font-extrabold text-gray-900">4. Resumen y activación</h4>
+                    <p className="text-sm text-gray-500 mt-1">Revisa la información antes de activar tu campaña.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+                      <p className="text-xs text-gray-500">Empresa</p>
+                      <p className="font-extrabold text-gray-900 mt-1">{localCompanyName || 'Sin definir'}</p>
+                    </div>
+
+                    <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+                      <p className="text-xs text-gray-500">Producto</p>
+                      <p className="font-extrabold text-gray-900 mt-1">{localProductToExport || 'Sin definir'}</p>
+                    </div>
+
+                    <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+                      <p className="text-xs text-gray-500">País destino</p>
+                      <p className="font-extrabold text-gray-900 mt-1">{localCountry || 'Sin definir'}</p>
+                    </div>
+
+                    <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+                      <p className="text-xs text-gray-500">Saldo disponible</p>
+                      <p className="font-extrabold text-green-700 mt-1">${balanceNumber.toFixed(2)} USD</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl bg-green-50 border border-green-100 p-5">
+                    <p className="text-sm text-green-800 font-bold">
+                      Al activar la campaña se ejecutará el proceso actual de prospección y se registrará la solicitud en el sistema.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-100 pt-5">
+                <ButtonSecondary
+                  type="button"
+                  onClick={() => {
+                    if (wizardStep === 1) setWizardOpen(false);
+                    else setWizardStep((prev) => Math.max(1, prev - 1));
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  {wizardStep === 1 ? 'Cancelar' : 'Atrás'}
+                </ButtonSecondary>
+
+                {wizardStep < 4 ? (
+                  <Button
+                    type="button"
+                    onClick={() => setWizardStep((prev) => Math.min(4, prev + 1))}
+                    className="w-full sm:w-auto"
+                  >
+                    Continuar
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={onGenerateCampaign}
+                    disabled={submitting}
+                    className="w-full sm:w-auto"
+                  >
+                    {submitting ? <><Spinner /> Activando…</> : 'Activar campaña'}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default ProspeccionTab;
-
