@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '../../supabaseClient';
+import { Button, Card, Badge, Input, Select, Alert, Loader } from '../ui';
 
 const AI_ENDPOINT =
   process.env.REACT_APP_AI_ENDPOINT ||
@@ -15,46 +16,18 @@ const QUICK_EXAMPLES = [
 const COUNTRIES_LATAM = [
   'México','Colombia','Chile','Perú','Argentina','Brasil','Ecuador','Uruguay','Paraguay','Bolivia','Costa Rica','Panamá','Guatemala','Honduras','El Salvador','Nicaragua','República Dominicana'
 ];
+
 const COUNTRIES_WORLD_COMMON = [
   'Estados Unidos','Canadá','España','Francia','Alemania','Italia','Reino Unido','China','Japón','Corea del Sur','India','Emiratos Árabes Unidos'
 ];
+
 const INCOTERMS = ['EXW','FCA','FOB','CFR','CIF','CPT','CIP','DAP','DPU','DDP'];
 
-// ------- UI helpers (coherentes con otras pestañas) -------
 const Spinner = () => (
-  <svg className="h-4 w-4 animate-spin text-green-600" viewBox="0 0 24 24">
+  <svg className="h-4 w-4 animate-spin text-green-700" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
   </svg>
-);
-
-const Button = ({ children, className = '', ...props }) => (
-  <button
-    className={
-      'h-[42px] inline-flex items-center gap-2 px-4 rounded-lg text-sm font-medium transition-colors ' +
-      'bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed ' +
-      className
-    }
-    {...props}
-  >
-    {children}
-  </button>
-);
-
-const Card = ({ title, subtitle, children, icon, footer }) => (
-  <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-    {(title || subtitle) && (
-      <div className="px-4 md:px-5 py-4 border-b border-gray-100 flex items-start gap-3">
-        {icon && <div className="text-green-600 mt-0.5">{icon}</div>}
-        <div>
-          <div className="text-base md:text-lg font-semibold text-gray-800">{title}</div>
-          {subtitle && <div className="text-sm text-gray-500 mt-0.5">{subtitle}</div>}
-        </div>
-      </div>
-    )}
-    <div className="p-4 md:p-5">{children}</div>
-    {footer && <div className="px-4 md:px-5 py-3 border-t border-gray-100">{footer}</div>}
-  </div>
 );
 
 const AsesoriaTab = () => {
@@ -126,7 +99,7 @@ const AsesoriaTab = () => {
   const [incoterm, setIncoterm] = useState('FOB');
   const [product, setProduct] = useState('');
   const [hsHint, setHsHint] = useState('');
-  const [language, setLanguage] = useState('es'); // si más adelante quieres 'en'
+  const [language, setLanguage] = useState('es');
 
   // Chat
   const [messages, setMessages] = useState([
@@ -185,9 +158,11 @@ const AsesoriaTab = () => {
         if (data?.error === 'PREMIUM_ONLY') {
           throw new Error('Esta función es solo para usuarios premium.');
         }
+
         if (data?.error && !res.ok) {
           throw new Error(data.error);
         }
+
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
@@ -209,170 +184,290 @@ const AsesoriaTab = () => {
 
   if (checking) {
     return (
-      <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-        <div className="bg-gradient-to-r from-green-600 to-emerald-500 px-5 md:px-6 py-6">
-          <h2 className="text-white text-2xl md:text-3xl font-bold">Asesoría Inteligente</h2>
-        </div>
-        <div className="p-4 md:p-6">
-          <div className="flex items-center gap-2 text-sm text-gray-500"><Spinner /> Cargando…</div>
-        </div>
-      </div>
+      <Card className="p-6">
+        <Loader text="Cargando asesoría inteligente…" />
+      </Card>
     );
   }
 
   if (!isPremium) {
     return (
-      <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-        <div className="bg-gradient-to-r from-green-600 to-emerald-500 px-5 md:px-6 py-6">
-          <h2 className="text-white text-2xl md:text-3xl font-bold">Asesoría Premium</h2>
-        </div>
-        <div className="p-4 md:p-6">
-          <p className="text-gray-700">
-            Esta sección está disponible solo para usuarios Premium. Actualiza tu plan para acceder al chat IA especializado y agendar asesoría con nuestro equipo.
-          </p>
-        </div>
-      </div>
+      <Card className="p-6 md:p-8">
+        <Badge variant="warning">Acceso restringido</Badge>
+        <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mt-4">
+          Asesoría Premium
+        </h2>
+        <p className="text-gray-600 mt-3 leading-relaxed max-w-2xl">
+          Esta sección está disponible solo para usuarios Premium. Actualiza tu plan para acceder al chat IA especializado y agendar asesoría con nuestro equipo.
+        </p>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-      {/* Header con gradiente */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-500 px-5 md:px-6 py-6">
-        <h2 className="text-white text-2xl md:text-3xl font-bold">Asesoría Inteligente en Comercio Exterior (IA)</h2>
-        <p className="text-emerald-50 mt-1">
-          Respuestas técnicas y accionables al instante, 24/7. Como Premium también puedes agendar con nuestro equipo (botón flotante).
-        </p>
-      </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div className="xl:col-span-2">
+          <Card className="p-6 md:p-8 overflow-hidden relative">
+            <div className="absolute right-8 top-8 h-32 w-32 rounded-full bg-green-100 blur-2xl opacity-70" />
 
-      <div className="p-4 md:p-6 space-y-8">
+            <div className="relative">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <Badge variant="success">Asesor IA</Badge>
+                <span className="text-sm text-gray-500">
+                  Comercio exterior especializado
+                </span>
+              </div>
+
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+                Asesoría inteligente en comercio exterior
+              </h2>
+
+              <p className="text-gray-600 mt-3 max-w-3xl leading-relaxed">
+                Resuelve dudas técnicas de exportación, Incoterms, trámites, precios,
+                clasificación arancelaria y estrategia internacional. Como usuario Premium
+                también puedes agendar una videollamada con nuestro equipo.
+              </p>
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-5">
+          <Card className="p-5">
+            <p className="text-sm text-gray-500">IA especializada</p>
+            <h3 className="text-3xl font-extrabold text-green-700 mt-1">24/7</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Respuestas accionables cuando las necesites.
+            </p>
+          </Card>
+
+          <Card className="p-5 bg-green-50 border-green-100">
+            <p className="text-sm text-green-700 font-semibold">Videollamada</p>
+            <h3 className="text-lg font-extrabold text-gray-900 mt-2">
+              Asesoría Premium
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Usa el botón flotante de Calendly para agendar con el equipo.
+            </p>
+          </Card>
+        </div>
+      </section>
+
+      {/* Context + Chat */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-5">
         {/* Contexto */}
-        <Card
-          title="Contexto de tu consulta"
-          subtitle="Cuanto más específico, mejor: país de origen/destino, Incoterm, producto y pista HS."
-          icon={<span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100">🌍</span>}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">País de origen</label>
-              <select
+        <aside className="xl:col-span-4 space-y-5">
+          <Card className="p-5 md:p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="h-11 w-11 rounded-2xl bg-green-100 text-green-700 flex items-center justify-center text-xl">
+                🌎
+              </div>
+              <div>
+                <h3 className="text-xl font-extrabold text-gray-900">
+                  Contexto de consulta
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Ajusta el escenario antes de preguntar.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Select
+                label="País de origen"
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base"
               >
                 {COUNTRIES_LATAM.map((c) => (
                   <option key={`o-${c}`} value={c}>{c}</option>
                 ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">País destino</label>
-              <select
+              </Select>
+
+              <Select
+                label="País destino"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base"
               >
                 {COUNTRIES_WORLD_COMMON.concat(COUNTRIES_LATAM).map((c) => (
                   <option key={`d-${c}`} value={c}>{c}</option>
                 ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Incoterm</label>
-              <select
+              </Select>
+
+              <Select
+                label="Incoterm"
                 value={incoterm}
                 onChange={(e) => setIncoterm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base"
               >
-                {INCOTERMS.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Producto</label>
-              <input
+                {INCOTERMS.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </Select>
+
+              <Input
+                label="Producto"
                 type="text"
                 value={product}
                 onChange={(e) => setProduct(e.target.value)}
                 placeholder="Ej. aguacate fresco, piezas automotrices"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base"
               />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pista HS / Fracción (opcional)</label>
-              <input
+
+              <Input
+                label="Pista HS / Fracción"
                 type="text"
                 value={hsHint}
                 onChange={(e) => setHsHint(e.target.value)}
-                placeholder="Ej. 0804.40 (solo si la conoces)"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base"
+                placeholder="Ej. 0804.40"
               />
             </div>
-          </div>
-        </Card>
+          </Card>
+
+          <Card className="p-5 bg-green-50 border-green-100">
+            <Badge variant="success">Contexto activo</Badge>
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-500">Ruta</span>
+                <span className="font-bold text-gray-900 text-right">{origin} → {destination}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-500">Incoterm</span>
+                <span className="font-bold text-gray-900">{incoterm}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-500">Producto</span>
+                <span className="font-bold text-gray-900 text-right">{product || 'Sin definir'}</span>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <h3 className="font-extrabold text-gray-900">Preguntas rápidas</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Usa una de estas consultas para comenzar.
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {QUICK_EXAMPLES.map((q, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => sendMessage(q)}
+                  className="rounded-full bg-gray-100 hover:bg-green-100 hover:text-green-700 px-3 py-2 text-xs font-semibold text-gray-600 transition"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </Card>
+        </aside>
 
         {/* Chat IA */}
-        <Card
-          title="Chat IA especializado"
-          subtitle={userEmail ? `Sesión: ${userEmail}` : 'Sesión activa'}
-          icon={<span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100">💬</span>}
-        >
-          <div className="rounded-lg border border-gray-200 bg-white">
-            <div ref={listRef} className="max-h-[380px] overflow-y-auto px-4 py-3 space-y-3">
-              {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div
-                    className={`max-w-[90%] md:max-w-[75%] whitespace-pre-wrap text-sm px-3 py-2 rounded-2xl ${
-                      m.role === 'user'
-                        ? 'bg-green-600 text-white rounded-br-sm'
-                        : 'bg-gray-100 text-gray-800 rounded-bl-sm'
-                    }`}
-                  >
-                    {m.content}
+        <div className="xl:col-span-8">
+          <Card className="overflow-hidden">
+            <div className="p-5 md:p-6 border-b border-gray-100 bg-white">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-[#045023] text-white flex items-center justify-center text-xl">
+                    🤖
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <Badge variant="success">Chat IA especializado</Badge>
+                      <span className="text-xs text-gray-400">
+                        {userEmail ? `Sesión: ${userEmail}` : 'Sesión activa'}
+                      </span>
+                    </div>
+                    <h3 className="text-2xl font-extrabold text-gray-900">
+                      Copilot de exportación
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Describe tu caso y recibe una respuesta técnica y accionable.
+                    </p>
                   </div>
                 </div>
-              ))}
-              {loading && <div className="text-sm text-gray-500 flex items-center gap-2"><Spinner /> La IA está redactando…</div>}
-            </div>
 
-            <div className="px-4 pb-3">
-              <div className="flex flex-wrap gap-2">
-                {QUICK_EXAMPLES.map((q, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => sendMessage(q)}
-                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full"
-                  >
-                    {q}
-                  </button>
-                ))}
+                <Badge variant="premium">Premium</Badge>
               </div>
             </div>
 
-            <div className="flex items-end gap-2 p-3 border-t border-gray-200">
-              <textarea
-                rows={2}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Escribe tu consulta (describe tu caso)…"
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-              <Button onClick={() => sendMessage()} disabled={!canSend}>
-                Enviar
-              </Button>
+            <div className="bg-gray-50">
+              <div
+                ref={listRef}
+                className="h-[520px] max-h-[65vh] overflow-y-auto px-4 md:px-6 py-5 space-y-4"
+              >
+                {messages.map((m, i) => (
+                  <div
+                    key={i}
+                    className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[92%] md:max-w-[78%] rounded-3xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
+                        m.role === 'user'
+                          ? 'bg-[#045023] text-white rounded-br-md'
+                          : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-bold opacity-80">
+                          {m.role === 'user' ? 'Tú' : 'Asesor IA'}
+                        </span>
+                      </div>
+                      {m.content}
+                    </div>
+                  </div>
+                ))}
+
+                {loading && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[92%] md:max-w-[78%] rounded-3xl rounded-bl-md bg-white border border-gray-100 px-4 py-3 text-sm text-gray-600 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <Spinner />
+                        Analizando tu caso y preparando respuesta…
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-gray-200 bg-white p-4">
+                {err && (
+                  <div className="mb-3">
+                    <Alert variant="danger">{err}</Alert>
+                  </div>
+                )}
+
+                <div className="flex flex-col md:flex-row items-stretch md:items-end gap-3">
+                  <textarea
+                    rows={3}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Escribe tu consulta. Ej. Quiero exportar aguacate de México a Estados Unidos bajo FOB..."
+                    className="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100 resize-none"
+                  />
+
+                  <Button
+                    onClick={() => sendMessage()}
+                    disabled={!canSend}
+                    className="w-full md:w-auto"
+                  >
+                    {loading ? 'Enviando…' : 'Enviar'}
+                  </Button>
+                </div>
+
+                <p className="text-xs text-gray-500 mt-3">
+                  Tip: entre más contexto proporciones, más útil será la respuesta del asesor IA.
+                </p>
+              </div>
             </div>
-
-            {err && <div className="px-4 pb-3 text-xs text-red-600">{err}</div>}
-          </div>
-        </Card>
-
-        <div className="text-sm text-gray-600">
-          Como usuario Premium, cuentas con asesoría IA y puedes agendar con nuestro equipo usando el botón flotante de Calendly.
+          </Card>
         </div>
-      </div>
+      </section>
+
+      <Alert variant="success">
+        Como usuario Premium, cuentas con asesoría IA y puedes agendar con nuestro equipo usando el botón flotante de Calendly.
+      </Alert>
     </div>
   );
 };
 
 export default AsesoriaTab;
-
