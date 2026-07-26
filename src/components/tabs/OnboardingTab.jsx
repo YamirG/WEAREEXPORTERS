@@ -1,5 +1,6 @@
 // src/components/tabs/OnboardingTab.jsx
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { Button, Card, Badge } from '../ui';
 
 /**
  * OnboardingTab — guía paso a paso con progreso.
@@ -24,43 +25,6 @@ const DEFAULT_ROUTES = {
   tramite: 'asesoria',
 };
 
-// Mini UI helpers
-const Card = ({ children, className = '' }) => (
-  <div className={`bg-white rounded-xl shadow-md border border-gray-100 ${className}`}>{children}</div>
-);
-
-const Header = ({ title, subtitle }) => (
-  <div className="bg-gradient-to-r from-green-600 to-emerald-500 px-5 md:px-6 py-6">
-    <h2 className="text-white text-2xl md:text-3xl font-bold">{title}</h2>
-    {subtitle && <p className="text-emerald-50 mt-1">{subtitle}</p>}
-  </div>
-);
-
-const StepBadge = ({ n, done, locked }) => (
-  <div
-    className={
-      'h-8 w-8 rounded-full flex items-center justify-center text-sm font-semibold ' +
-      (done
-        ? 'bg-emerald-600 text-white'
-        : locked
-        ? 'bg-gray-200 text-gray-500'
-        : 'bg-emerald-50 text-emerald-700 border border-emerald-200')
-    }
-    title={done ? 'Completado' : locked ? 'Bloqueado' : 'Disponible'}
-  >
-    {done ? '✓' : n}
-  </div>
-);
-
-const ProgressBar = ({ pct }) => (
-  <div className="w-full h-3 rounded-full bg-gray-100 overflow-hidden">
-    <div
-      className="h-full bg-emerald-500 transition-all"
-      style={{ width: `${Math.min(Math.max(pct, 0), 100)}%` }}
-    />
-  </div>
-);
-
 const STORAGE_KEY = 'onboarding_v1';
 
 const BASE_STEPS = [
@@ -69,45 +33,78 @@ const BASE_STEPS = [
     title: 'Identificar países con demanda',
     desc:
       'Descubre qué países consumen tu producto y dónde hay mayor tracción. Empieza entendiendo la demanda y el tamaño del mercado.',
-    cta: 'Ir a detección de mercados',
+    cta: 'Ir ahora',
     done: false,
+    icon: '🌎',
+    tip: 'Empieza con 1–2 países y valida demanda antes de expandirte.',
   },
   {
     key: 'requisitos',
     title: 'Requisitos de exportación/importación',
     desc:
-      'Valida requisitos para salir de tu país y entrar al destino (normas, permisos, etiquetado, certificaciones y aranceles).',
-    cta: 'Ver normativa y cambios',
+      'Valida requisitos para salir de tu país y entrar al destino: normas, permisos, etiquetado, certificaciones y aranceles.',
+    cta: 'Ir ahora',
     done: false,
+    icon: '📄',
+    tip: 'Reúne HS/Fracción y verifica requisitos sanitarios, etiquetado y permisos.',
   },
   {
     key: 'rentabilidad',
     title: 'Validar rentabilidad',
     desc:
-      'Valida si tu producto ya es comercializado en el país destino.',
-    cta: 'Explorar quien ya lo importa',
+      'Valida si tu producto ya es comercializado en el país destino y revisa quién ya lo importa.',
+    cta: 'Explorar',
     done: false,
+    icon: '💵',
+    tip: 'Observa a las empresas importadoras que ya lo hacen.',
   },
   {
     key: 'prospeccion',
     title: 'Prospección masiva en destino',
     desc:
       'Activa la prospección masiva: listas cualificadas, mensajes iniciales y seguimiento para convertir en ventas.',
-    cta: 'Iniciar prospección',
+    cta: 'Iniciar',
     done: false,
+    icon: '👥',
+    tip: 'Usa mensajes cortos y claros; mide respuesta y agenda reuniones.',
   },
   {
     key: 'tramite',
     title: 'Gestionar mi primer trámite',
     desc:
       'Acompañamiento para el primer envío: documentos, logística, Incoterm y coordinación con tu asesor.',
-    cta: 'Agendar asesoría / checklist',
+    cta: 'Agendar',
     done: false,
+    icon: '✅',
+    tip: 'Prepara documentos, precios, cotiza flete y coordina tu primer envío.',
   },
 ];
 
+const StepStatus = ({ done, locked }) => {
+  if (done) return <Badge variant="success">✓ Completado</Badge>;
+  if (locked) return <Badge variant="neutral">🔒 Bloqueado</Badge>;
+  return <Badge variant="neutral" className="bg-blue-50 text-blue-700">Disponible</Badge>;
+};
+
+const ProgressRing = ({ pct }) => {
+  const normalized = Math.min(Math.max(pct, 0), 100);
+
+  return (
+    <div className="relative h-16 w-16">
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: `conic-gradient(#16A34A ${normalized * 3.6}deg, #E5E7EB 0deg)`,
+        }}
+      />
+      <div className="absolute inset-2 rounded-full bg-white flex items-center justify-center">
+        <span className="text-sm font-extrabold text-green-700">{normalized}%</span>
+      </div>
+    </div>
+  );
+};
+
 const OnboardingTab = ({ onGoTo, userEmail, routes = DEFAULT_ROUTES }) => {
-  // 👇 Carga inicial desde localStorage SIN useEffect (evita el disable y el warning)
   const [steps, setSteps] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -121,7 +118,6 @@ const OnboardingTab = ({ onGoTo, userEmail, routes = DEFAULT_ROUTES }) => {
     return BASE_STEPS;
   });
 
-  // Guardar progreso cuando cambien los pasos
   useEffect(() => {
     try {
       const minimal = steps.map((s) => ({ key: s.key, done: s.done }));
@@ -132,7 +128,6 @@ const OnboardingTab = ({ onGoTo, userEmail, routes = DEFAULT_ROUTES }) => {
   const completed = steps.filter((s) => s.done).length;
   const pct = useMemo(() => Math.round((completed / steps.length) * 100), [completed, steps.length]);
 
-  // Bloqueo: cada paso se desbloquea cuando el anterior esté completo
   const withLocks = useMemo(() => {
     return steps.map((s, idx) => {
       const locked = idx > 0 && !steps[idx - 1].done;
@@ -148,7 +143,6 @@ const OnboardingTab = ({ onGoTo, userEmail, routes = DEFAULT_ROUTES }) => {
     setSteps((prev) => prev.map((s) => ({ ...s, done: false })));
   }, []);
 
-  // ✅ Memoizamos getRouteFor y la usamos en goTo (sin warnings)
   const getRouteFor = useCallback(
     (key) => {
       switch (key) {
@@ -178,163 +172,237 @@ const OnboardingTab = ({ onGoTo, userEmail, routes = DEFAULT_ROUTES }) => {
   );
 
   return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-      <Header
-        title="Inicio Rápido — Tu ruta a la primera exportación"
-        subtitle={
-          userEmail
-            ? `Bienvenido/a, ${userEmail}. Desbloquea cada paso y avanza hacia tu primer envío.`
-            : 'Desbloquea cada paso y avanza hacia tu primer envío.'
-        }
-      />
-
-      <div className="p-4 md:p-6 space-y-6">
-        {/* Progreso */}
-        <Card className="p-4 md:p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <div className="text-sm text-gray-500">Progreso</div>
-              <div className="text-lg font-semibold text-gray-800">{pct}% completado</div>
-            </div>
-            <button
-              className="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg"
-              onClick={resetProgress}
-            >
-              Reiniciar progreso
-            </button>
-          </div>
-          <ProgressBar pct={pct} />
-          <p className="text-xs text-gray-500 mt-2">
-            Consejo: marca como completado cada paso una vez que termines su tarea principal.
-          </p>
-        </Card>
-
-        {/* Pasos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {withLocks.map((s, idx) => (
-            <Card key={s.key} className="p-4 md:p-5">
-              <div className="flex items-start gap-3">
-                <StepBadge n={idx + 1} done={s.done} locked={s.locked} />
-                <div className="flex-1">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-base md:text-lg font-semibold text-gray-800">
-                        {s.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">{s.desc}</p>
-                    </div>
-                    <span
-                      className={
-                        'text-xs px-2 py-1 rounded-full border ' +
-                        (s.done
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : s.locked
-                          ? 'bg-gray-50 text-gray-500 border-gray-200'
-                          : 'bg-blue-50 text-blue-700 border-blue-200')
-                      }
-                    >
-                      {s.done ? 'Completado' : s.locked ? 'Bloqueado' : 'Disponible'}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      className={
-                        'h-[40px] px-4 rounded-lg text-sm font-medium ' +
-                        (s.locked
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-green-600 hover:bg-green-700 text-white')
-                      }
-                      disabled={s.locked}
-                      onClick={() => goTo(s.key)}
-                    >
-                      {s.cta}
-                    </button>
-
-                    {!s.done ? (
-                      <button
-                        className={
-                          'h-[40px] px-3 rounded-lg text-sm ' +
-                          (s.locked
-                            ? 'bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed'
-                            : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-700')
-                        }
-                        disabled={s.locked}
-                        onClick={() => markDone(s.key, true)}
-                      >
-                        Marcar como completado
-                      </button>
-                    ) : (
-                      <button
-                        className="h-[40px] px-3 rounded-lg text-sm bg-white border border-emerald-200 hover:bg-emerald-50 text-emerald-700"
-                        onClick={() => markDone(s.key, false)}
-                      >
-                        Desmarcar
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Tips contextuales */}
-                  {s.key === 'pais' && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Tip: empieza con 1–2 países. Puedes pedirle en el Chat IA un resumen rápido
-                      de “dónde crece la demanda de &lt;tu producto&gt;”.
-                    </p>
-                  )}
-                  {s.key === 'requisitos' && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Reúne HS/Fracción y verifica requisitos sanitarios/fitosanitarios, etiquetado y permisos.
-                    </p>
-                  )}
-                  {s.key === 'rentabilidad' && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Observa a las empresas importadores que ya lo hacen.
-                    </p>
-                  )}
-                  {s.key === 'prospeccion' && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Usa mensajes cortos y claros; mide respuesta y agenda reuniones para cerrar ventas.
-                    </p>
-                  )}
-                  {s.key === 'tramite' && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Prepara documentos, precios, cotiza flete y coordina tu primer envío con el asesor.
-                    </p>
-                  )}
-                </div>
+    <div className="space-y-6">
+      {/* Hero */}
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div className="xl:col-span-2">
+          <Card className="p-6 md:p-8 overflow-hidden relative">
+            <div className="absolute right-8 top-8 h-28 w-28 rounded-full bg-green-100 blur-2xl opacity-70" />
+            <div className="relative">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <Badge variant="success">Premium</Badge>
+                <span className="text-sm text-gray-500">Tu camino como exportador</span>
               </div>
-            </Card>
-          ))}
+
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+                Bienvenido de nuevo 👋
+              </h2>
+
+              <p className="text-gray-600 mt-3 max-w-2xl leading-relaxed">
+                {userEmail
+                  ? `Bienvenido/a, ${userEmail}. Sigue estos pasos para exportar con éxito y aprovechar todas las herramientas de WeAreExporters.`
+                  : 'Sigue estos pasos para exportar con éxito y aprovechar todas las herramientas de WeAreExporters.'}
+              </p>
+            </div>
+          </Card>
         </div>
 
-        {/* Bloque final de ayuda */}
-        <Card className="p-4 md:p-5">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-              <div className="text-base md:text-lg font-semibold text-gray-800">
-                ¿Necesitas ayuda para avanzar?
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-5">
+          <Card className="p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Tu progreso</p>
+                <h3 className="text-3xl font-extrabold text-green-700 mt-1">{pct}%</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {completed} de {steps.length} pasos completados
+                </p>
               </div>
-              <div className="text-sm text-gray-600">
-                Puedes abrir un ticket en <span className="font-medium">Soporte</span> o agendar con el equipo.
+              <ProgressRing pct={pct} />
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <p className="text-sm text-gray-500">Siguiente acción recomendada</p>
+            <h3 className="text-lg font-extrabold text-gray-900 mt-2">
+              {withLocks.find((s) => !s.done && !s.locked)?.title || 'Ruta completada'}
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Avanza paso a paso para construir tu proceso exportador.
+            </p>
+          </Card>
+        </div>
+      </section>
+
+      {/* Main layout */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+        {/* Steps */}
+        <Card className="xl:col-span-8 p-5 md:p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+            <div>
+              <h3 className="text-2xl font-extrabold text-gray-900">Tu ruta de exportación</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Completa cada paso para avanzar en tu camino como exportador profesional.
+              </p>
+            </div>
+
+            <Button variant="outline" size="sm" onClick={resetProgress}>
+              Reiniciar progreso
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            {withLocks.map((s, idx) => (
+              <div
+                key={s.key}
+                className={`rounded-2xl border bg-white p-4 md:p-5 transition-all duration-200 min-h-[178px] ${
+                  s.done
+                    ? 'border-green-100 shadow-sm'
+                    : s.locked
+                    ? 'border-gray-200 opacity-75'
+                    : 'border-blue-100 shadow-sm'
+                }`}
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-[92px_minmax(0,1fr)_260px] gap-4 h-full">
+                  {/* Columna izquierda */}
+                  <div className="flex lg:flex-col items-center lg:items-start gap-3">
+                    <div
+                      className={`h-10 w-10 rounded-full flex items-center justify-center font-extrabold text-sm shrink-0 ${
+                        s.done
+                          ? 'bg-green-700 text-white'
+                          : s.locked
+                          ? 'bg-gray-200 text-gray-500'
+                          : 'bg-blue-500 text-white'
+                      }`}
+                    >
+                      {s.done ? '✓' : idx + 1}
+                    </div>
+
+                    <div className="h-12 w-12 rounded-2xl bg-green-50 flex items-center justify-center text-2xl shrink-0">
+                      {s.icon}
+                    </div>
+                  </div>
+
+                  {/* Columna información */}
+                  <div className="min-w-0 flex flex-col justify-between">
+                    <div>
+                      <h4 className="font-extrabold text-gray-900 leading-snug">
+                        {s.title}
+                      </h4>
+
+                      <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                        {s.desc}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 rounded-2xl bg-gray-50 border border-gray-100 px-4 py-3">
+                      <p className="text-xs text-gray-500 leading-relaxed">
+                        <span className="font-bold text-gray-700">Tip: </span>
+                        {s.tip}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Columna acciones */}
+                  <div className="flex flex-col justify-center lg:items-stretch gap-2 lg:border-l lg:border-gray-100 lg:pl-5">
+                    <div className="flex lg:justify-start">
+                      <StepStatus done={s.done} locked={s.locked} />
+                    </div>
+
+                    <Button
+                      variant={s.locked ? 'outline' : s.done ? 'outline' : 'secondary'}
+                      size="sm"
+                      disabled={s.locked}
+                      onClick={() => goTo(s.key)}
+                      className="w-full whitespace-nowrap"
+                    >
+                      {s.locked ? 'Próximamente' : s.cta} →
+                    </Button>
+
+                    {!s.done ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={s.locked}
+                        onClick={() => markDone(s.key, true)}
+                        className="w-full whitespace-nowrap"
+                      >
+                        Marcar ✓
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => markDone(s.key, false)}
+                        className="w-full whitespace-nowrap"
+                      >
+                        Desmarcar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Right column */}
+        <aside className="xl:col-span-4 space-y-5">
+          <Card className="p-5">
+            <h3 className="text-lg font-extrabold text-gray-900">Consejos para avanzar</h3>
+
+            <div className="mt-4 space-y-3">
+              <div className="rounded-2xl border border-gray-100 p-4 flex gap-3">
+                <div className="h-11 w-11 rounded-2xl bg-green-100 text-green-700 flex items-center justify-center text-xl">
+                  💡
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 text-sm">Empieza con un país</h4>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Identifica un solo país con demanda real antes de expandirte.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-gray-100 p-4 flex gap-3">
+                <div className="h-11 w-11 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl">
+                  📘
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 text-sm">Revisa requisitos</h4>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Los requisitos cambian constantemente. Mantente actualizado.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-gray-100 p-4 flex gap-3">
+                <div className="h-11 w-11 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center text-xl">
+                  🚀
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 text-sm">Prospecta con estrategia</h4>
+                  <p className="text-sm text-gray-500 mt-1">
+                    La prospección funciona mejor con mensajes personalizados.
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                className="px-4 h-[40px] rounded-lg text-sm bg-white border border-gray-200 hover:bg-gray-50"
-                onClick={() => (typeof onGoTo === 'function' ? onGoTo('soporte') : null)}
-              >
-                Ir a Soporte
-              </button>
-              <button
-                className="px-4 h-[40px] rounded-lg text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+          </Card>
+
+          <Card className="p-5 bg-green-50 border-green-100">
+            <h3 className="text-lg font-extrabold text-green-800">¿Necesitas ayuda?</h3>
+            <p className="text-sm text-gray-700 mt-2 leading-relaxed">
+              Nuestro equipo puede acompañarte en cada paso del proceso.
+            </p>
+
+            <div className="mt-4 grid gap-2">
+              <Button
+                variant="primary"
                 onClick={() => (typeof onGoTo === 'function' ? onGoTo('asesoria') : null)}
               >
                 Agendar asesoría
-              </button>
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => (typeof onGoTo === 'function' ? onGoTo('soporte') : null)}
+              >
+                Ir a soporte
+              </Button>
             </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </aside>
+      </section>
     </div>
   );
 };
