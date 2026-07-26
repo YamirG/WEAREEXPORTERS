@@ -1,7 +1,6 @@
 // src/pages/LandingDiagnosticoExportador.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient";
 import RegisterModal from "../components/RegisterModal";
 
 import {
@@ -11,22 +10,18 @@ import {
   isHSLike,
 } from "../services/consultaIA";
 
-const ADMIN_EMAIL = "yamirguillenr@gmail.com";
 const VIDEO_URL_DEFAULT = "https://youtu.be/bBUlYviB_7k";
 const FREE_DIAGNOSTIC_STORAGE_KEY =
   "weareexporters_free_diagnostic_used";
 
 // Datos de contacto del footer. Sustituye únicamente el teléfono y enlaces
 // cuando tengas las URLs definitivas de tus redes sociales.
-const CONTACT_EMAIL = "yamirguillenr@gmail.com";
-const CONTACT_PHONE_DISPLAY = "+52 TU NÚMERO";
-const CONTACT_PHONE_LINK = "";
+const CONTACT_EMAIL = "somosexportadoresmx@gmail.com";
+const CONTACT_PHONE_DISPLAY = "+525574169768";
 
 const SOCIAL_LINKS = [
-  { name: "Instagram", href: "https://www.instagram.com/" },
-  { name: "TikTok", href: "https://www.tiktok.com/" },
-  { name: "YouTube", href: "https://www.youtube.com/" },
-  { name: "LinkedIn", href: "https://www.linkedin.com/" },
+  { name: "Facebook", href: "https://www.facebook.com/share/14cFVcB1kPz/" },
+
 ];
 
 
@@ -154,9 +149,6 @@ function getYouTubeEmbed(url) {
 export default function LandingDiagnosticoExportador() {
   const navigate = useNavigate();
 
-  const [adminEmail, setAdminEmail] = useState("");
-  const [videoUrl, setVideoUrl] = useState(VIDEO_URL_DEFAULT);
-
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [showFreeLimitModal, setShowFreeLimitModal] =
@@ -186,12 +178,9 @@ export default function LandingDiagnosticoExportador() {
     useState(null);
 
   const embedSrc = useMemo(
-    () => getYouTubeEmbed(videoUrl),
-    [videoUrl]
+    () => getYouTubeEmbed(VIDEO_URL_DEFAULT),
+    []
   );
-
-  const isAdmin =
-    adminEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   const hsIsValid = isHSLike(hsCode);
 
@@ -208,43 +197,22 @@ export default function LandingDiagnosticoExportador() {
   }, [marketResult]);
 
   useEffect(() => {
-    let isMounted = true;
+    // Siempre abre la landing desde el inicio, aunque el usuario
+    // llegue desde otra sección de la Home.
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
 
-    const getUser = async () => {
-      try {
-        const { data, error } =
-          await supabase.auth.getUser();
-
-        if (error) {
-          console.warn(
-            "No se pudo verificar el usuario administrador:",
-            error
-          );
-
-          return;
-        }
-
-        if (isMounted) {
-          setAdminEmail(data?.user?.email || "");
-        }
-      } catch (error) {
-        console.warn(
-          "Error verificando usuario administrador:",
-          error
-        );
-      }
-    };
-
-    getUser();
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
 
     const timer = window.setTimeout(() => {
-      if (isMounted) {
-        setShowDiagnostic(true);
-      }
+      setShowDiagnostic(true);
     }, 60000);
 
     return () => {
-      isMounted = false;
       window.clearTimeout(timer);
     };
   }, []);
@@ -612,30 +580,6 @@ export default function LandingDiagnosticoExportador() {
       {/* Video */}
       <section className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 md:pt-10">
         <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:rounded-3xl sm:p-6">
-          {isAdmin && (
-            <div className="mb-5 rounded-2xl border border-green-200 bg-green-50 p-4">
-              <div className="text-sm font-extrabold text-green-800">
-                Panel administrativo
-              </div>
-
-              <p className="mt-1 text-xs text-green-700">
-                Solo visible para {ADMIN_EMAIL}. Desde aquí
-                puedes probar otra URL de YouTube durante esta
-                sesión.
-              </p>
-
-              <input
-                type="url"
-                value={videoUrl}
-                onChange={(event) =>
-                  setVideoUrl(event.target.value)
-                }
-                className="mt-3 w-full rounded-2xl border border-green-200 bg-white px-4 py-3 text-sm outline-none focus:border-green-500"
-                placeholder="Pega una URL de YouTube"
-              />
-            </div>
-          )}
-
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 sm:rounded-3xl">
             {embedSrc ? (
               <div className="aspect-video w-full">
