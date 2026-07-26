@@ -11,12 +11,12 @@ import SoporteTab from './tabs/SoporteTab';
 import OnboardingTab from './tabs/OnboardingTab';
 import TramitologiaTab from './tabs/TramitologiaTab';
 
+import { Badge, Button } from './ui';
+
 const PremiumDashboard = () => {
-  // ⬇️ Arrancamos en "inicio" para guiar al usuario
   const [activeTab, setActiveTab] = useState('inicio');
   const [walletBalance, setWalletBalance] = useState(0);
 
-  // 👇 Estado para la pestaña de Capacitación (evita undefined)
   const [courseVideos, setCourseVideos] = useState([
     // Ejemplo opcional de arranque:
     // { id: 'ex1', title: 'De cero a exportador - Intro', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }
@@ -24,7 +24,6 @@ const PremiumDashboard = () => {
   const [newVideoTitle, setNewVideoTitle] = useState('');
   const [newVideoUrl, setNewVideoUrl] = useState('');
 
-  // Normaliza enlaces de YouTube a formato embed
   const toEmbedUrl = (raw = '') => {
     const url = raw.trim();
     if (!url) return '';
@@ -56,216 +55,219 @@ const PremiumDashboard = () => {
     setNewVideoUrl('');
   };
 
-  // 👇 Permite que OnboardingTab cambie de pestaña
   const handleGoTo = useCallback((tabKey) => {
     setActiveTab(tabKey);
   }, []);
 
-  const tabButtonClass = (tabKey) =>
-    `whitespace-nowrap px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium text-sm md:text-base transition-colors ${
+  const navItems = [
+    { key: 'inicio', label: 'Inicio', icon: '⌂' },
+    { key: 'consultas', label: 'Consultas', icon: '⌕' },
+    { key: 'prospeccion', label: 'Prospección', icon: '✦' },
+    { key: 'cartera', label: 'Cartera', icon: '◈' },
+    { key: 'capacitacion', label: 'Capacitación', icon: '▣' },
+    { key: 'asesoria', label: 'Asesoría', icon: '◌' },
+    { key: 'tramitologia', label: 'Tramitología', icon: '▤' },
+    { key: 'actualizaciones', label: 'Actualizaciones', icon: '↻' },
+    { key: 'soporte', label: 'Soporte', icon: '?' },
+  ];
+
+  const activeLabel = navItems.find((item) => item.key === activeTab)?.label || 'Panel';
+
+  const desktopNavClass = (tabKey) =>
+    `w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-200 ${
+      activeTab === tabKey
+        ? 'bg-[#045023] text-white shadow-sm'
+        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+    }`;
+
+  const mobileNavClass = (tabKey) =>
+    `min-w-[74px] flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-2xl text-[11px] font-semibold transition-all duration-200 ${
       activeTab === tabKey
         ? 'bg-green-100 text-green-700'
-        : 'text-gray-600 hover:bg-gray-100'
+        : 'text-gray-500 hover:bg-gray-50'
     }`;
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* HEADER */}
-      <header className="bg-green-700 text-white shadow-md">
-        <div className="container mx-auto px-4 py-4 md:py-4">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            {/* Título */}
-            <div className="text-center lg:text-left">
-              <h1 className="text-xl sm:text-2xl md:text-2xl font-bold leading-tight">
-                Panel Premium de WeAreExporters
-              </h1>
+    <div className="min-h-screen bg-[#F8FAFC] text-gray-900">
+      <div className="flex min-h-screen">
+        {/* SIDEBAR DESKTOP */}
+        <aside className="hidden lg:flex w-[280px] shrink-0 border-r border-gray-200 bg-white fixed left-0 top-0 bottom-0 z-40">
+          <div className="flex flex-col w-full p-5">
+            <div className="mb-8">
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 rounded-2xl bg-[#045023] text-white flex items-center justify-center font-extrabold">
+                  W
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-green-700 uppercase tracking-widest">
+                    WeAreExporters
+                  </p>
+                  <h1 className="text-lg font-extrabold text-gray-900 leading-tight">
+                    Premium Panel
+                  </h1>
+                </div>
+              </div>
             </div>
 
-            {/* Saldo + acciones */}
-            <div className="w-full lg:w-auto flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap items-stretch sm:items-center justify-center lg:justify-end gap-2 sm:gap-3">
-              <div className="text-center sm:text-left text-sm sm:text-base md:text-lg font-medium bg-white/10 px-3 py-2 rounded-lg">
-                Saldo: ${walletBalance.toFixed(2)}
-              </div>
+            <nav className="flex-1 space-y-2" aria-label="Navegación principal">
+              {navItems.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setActiveTab(item.key)}
+                  className={desktopNavClass(item.key)}
+                >
+                  <span className="h-9 w-9 rounded-xl bg-gray-100/80 text-current flex items-center justify-center">
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </nav>
 
-              <button
+            <div className="mt-6 rounded-3xl bg-green-50 border border-green-100 p-4">
+              <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">
+                Saldo disponible
+              </p>
+              <p className="text-2xl font-extrabold text-gray-900 mt-1">
+                ${walletBalance.toFixed(2)}
+              </p>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full mt-4"
                 onClick={() => setActiveTab('cartera')}
-                className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors text-sm md:text-base font-medium"
               >
                 Gestionar Cartera
-              </button>
-
-              <button
-                onClick={() => {
-                  localStorage.setItem('isPremiumUser', 'false');
-                  localStorage.setItem('queryCount', '0');
-                  window.location.href = '/';
-                }}
-                className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors text-sm md:text-base font-medium"
-              >
-                Cerrar Sesión Premium
-              </button>
+              </Button>
             </div>
           </div>
+        </aside>
+
+        {/* MAIN AREA */}
+        <div className="flex-1 lg:ml-[280px]">
+          {/* HEADER */}
+          <header className="sticky top-0 z-30 bg-[#F8FAFC]/90 backdrop-blur-xl border-b border-gray-200">
+            <div className="px-4 sm:px-6 lg:px-8 py-4">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="success">Premium</Badge>
+                    <span className="text-xs text-gray-400 hidden sm:inline">
+                      Plataforma de exportación
+                    </span>
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900">
+                    {activeLabel}
+                  </h2>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <div className="bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-sm">
+                    <p className="text-xs text-gray-500">Saldo</p>
+                    <p className="text-sm font-extrabold text-green-700">
+                      ${walletBalance.toFixed(2)}
+                    </p>
+                  </div>
+
+                  <Button
+                    variant="secondary"
+                    onClick={() => setActiveTab('cartera')}
+                    className="w-full sm:w-auto"
+                  >
+                    Gestionar Cartera
+                  </Button>
+
+                  <Button
+                    variant="danger"
+                    onClick={() => {
+                      localStorage.setItem('isPremiumUser', 'false');
+                      localStorage.setItem('queryCount', '0');
+                      window.location.href = '/';
+                    }}
+                    className="w-full sm:w-auto"
+                  >
+                    Cerrar Sesión
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* CONTENT */}
+          <main className="px-4 sm:px-6 lg:px-8 py-6 pb-28 lg:pb-8">
+            <div className="max-w-7xl mx-auto">
+              {activeTab === 'inicio' && (
+                <OnboardingTab
+                  onGoTo={handleGoTo}
+                  routes={{
+                    pais: 'consultas',
+                    requisitos: 'consultas',
+                    rentabilidad: 'consultas',
+                    prospeccion: 'prospeccion',
+                    tramite: 'tramitologia',
+                  }}
+                />
+              )}
+
+              {activeTab === 'consultas' && <ConsultasTab />}
+
+              {activeTab === 'prospeccion' && (
+                <ProspeccionTab
+                  walletBalance={walletBalance}
+                  setWalletBalance={setWalletBalance}
+                />
+              )}
+
+              {activeTab === 'cartera' && (
+                <CarteraTab
+                  walletBalance={walletBalance}
+                  setWalletBalance={setWalletBalance}
+                />
+              )}
+
+              {activeTab === 'capacitacion' && (
+                <CapacitacionTab
+                  // videos={courseVideos}
+                  // onAddVideo={handleAddVideo}
+                  // newVideoTitle={newVideoTitle}
+                  // newVideoUrl={newVideoUrl}
+                  // setNewVideoTitle={setNewVideoTitle}
+                  // setNewVideoUrl={setNewVideoUrl}
+                />
+              )}
+
+              {activeTab === 'asesoria' && <AsesoriaTab />}
+
+              {activeTab === 'tramitologia' && <TramitologiaTab />}
+
+              {activeTab === 'actualizaciones' && <ActualizacionesTab />}
+
+              {activeTab === 'soporte' && <SoporteTab />}
+            </div>
+          </main>
         </div>
-      </header>
+      </div>
 
-      {/* NAV */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="container mx-auto px-3 sm:px-4 py-3">
-          {/* Móvil: scroll horizontal limpio */}
-          <div className="md:hidden overflow-x-auto">
-            <ul className="flex gap-2 min-w-max">
-              <li>
-                <button onClick={() => setActiveTab('inicio')} className={tabButtonClass('inicio')}>
-                  Inicio
+      {/* BOTTOM NAV MOBILE */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-gray-200 px-3 py-2">
+        <div className="overflow-x-auto">
+          <ul className="flex gap-2 min-w-max">
+            {navItems.map((item) => (
+              <li key={item.key}>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(item.key)}
+                  className={mobileNavClass(item.key)}
+                >
+                  <span className="text-base leading-none">{item.icon}</span>
+                  <span>{item.label}</span>
                 </button>
               </li>
-              <li>
-                <button onClick={() => setActiveTab('consultas')} className={tabButtonClass('consultas')}>
-                  Consultas
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('prospeccion')} className={tabButtonClass('prospeccion')}>
-                  Prospección Masiva
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('cartera')} className={tabButtonClass('cartera')}>
-                  Cartera Digital
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('capacitacion')} className={tabButtonClass('capacitacion')}>
-                  Capacitación
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('asesoria')} className={tabButtonClass('asesoria')}>
-                  Asesoría
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('tramitologia')} className={tabButtonClass('tramitologia')}>
-                  Tramitología
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('actualizaciones')} className={tabButtonClass('actualizaciones')}>
-                  Actualizaciones
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('soporte')} className={tabButtonClass('soporte')}>
-                  Soporte
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Escritorio: wrap limpio con gap */}
-          <div className="hidden md:block">
-            <ul className="flex flex-wrap items-center justify-start gap-3">
-              <li>
-                <button onClick={() => setActiveTab('inicio')} className={tabButtonClass('inicio')}>
-                  Inicio
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('consultas')} className={tabButtonClass('consultas')}>
-                  Consultas
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('prospeccion')} className={tabButtonClass('prospeccion')}>
-                  Prospección Masiva
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('cartera')} className={tabButtonClass('cartera')}>
-                  Cartera Digital
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('capacitacion')} className={tabButtonClass('capacitacion')}>
-                  Capacitación
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('asesoria')} className={tabButtonClass('asesoria')}>
-                  Asesoría
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('tramitologia')} className={tabButtonClass('tramitologia')}>
-                  Tramitología
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('actualizaciones')} className={tabButtonClass('actualizaciones')}>
-                  Actualizaciones
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('soporte')} className={tabButtonClass('soporte')}>
-                  Soporte
-                </button>
-              </li>
-            </ul>
-          </div>
+            ))}
+          </ul>
         </div>
       </nav>
-
-      {/* CONTENIDO */}
-      <div className="container mx-auto p-4 md:p-6">
-        {activeTab === 'inicio' && (
-          <OnboardingTab
-            onGoTo={handleGoTo}
-            routes={{
-              pais: 'consultas',
-              requisitos: 'consultas',
-              rentabilidad: 'consultas',
-              prospeccion: 'prospeccion',
-              tramite: 'tramitologia',
-            }}
-          />
-        )}
-
-        {activeTab === 'consultas' && <ConsultasTab />}
-
-        {activeTab === 'prospeccion' && (
-          <ProspeccionTab
-            walletBalance={walletBalance}
-            setWalletBalance={setWalletBalance}
-          />
-        )}
-
-        {activeTab === 'cartera' && (
-          <CarteraTab
-            walletBalance={walletBalance}
-            setWalletBalance={setWalletBalance}
-          />
-        )}
-
-        {activeTab === 'capacitacion' && (
-          <CapacitacionTab
-            // videos={courseVideos}
-            // onAddVideo={handleAddVideo}
-            // newVideoTitle={newVideoTitle}
-            // newVideoUrl={newVideoUrl}
-            // setNewVideoTitle={setNewVideoTitle}
-            // setNewVideoUrl={setNewVideoUrl}
-          />
-        )}
-
-        {activeTab === 'asesoria' && <AsesoriaTab />}
-
-        {activeTab === 'tramitologia' && <TramitologiaTab />}
-
-        {activeTab === 'actualizaciones' && <ActualizacionesTab />}
-
-        {activeTab === 'soporte' && <SoporteTab />}
-      </div>
     </div>
   );
 };
