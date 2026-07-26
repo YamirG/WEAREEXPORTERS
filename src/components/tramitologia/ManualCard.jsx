@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button, Card, Badge } from '../ui';
 
 export default function ManualCard({ manual, onDownloadPdf }) {
   const safeManual = manual || {};
@@ -17,149 +18,196 @@ export default function ManualCard({ manual, onDownloadPdf }) {
   const links = Array.isArray(safeManual.links) ? safeManual.links : [];
 
   return (
-    <article className="rounded-2xl border border-gray-200 shadow-sm overflow-hidden bg-white">
-      <header className="px-5 py-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="text-lg md:text-xl font-extrabold text-gray-900">
-          {title}
-        </h3>
-
-        <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-          País: <strong>{country}</strong> · Trámite: <strong>{procedureLabel}</strong>
-          {hsCode ? (
-            <>
-              {' '}· HS/Producto: <strong>{hsCode}</strong>
-            </>
-          ) : null}
-        </p>
-      </header>
-
-      <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
-        <section className="md:col-span-1">
-          <h4 className="font-bold text-gray-900 mb-2">Requisitos</h4>
-
-          <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
-            {requirements.length > 0 ? (
-              requirements.map((r, i) => (
-                <li key={`req-${i}`}>
-                  {typeof r === 'string' ? r : r?.label || 'Requisito no especificado'}
-                </li>
-              ))
-            ) : (
-              <li>No disponibles (demo)</li>
-            )}
-          </ul>
-
-          <div className="mt-4">
-            <h4 className="font-bold text-gray-900 mb-1">Autoridad</h4>
-            <p className="text-sm text-gray-700">{authority}</p>
-          </div>
-
-          <div className="mt-3 grid grid-cols-2 gap-3">
+    <article className="space-y-5">
+      <Card className="overflow-hidden">
+        <header className="p-5 md:p-6 border-b border-gray-100 bg-white">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div>
-              <h4 className="font-bold text-gray-900 mb-1">Tiempos</h4>
-              <p className="text-sm text-gray-700">{sla}</p>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <Badge variant="success">Guía generada</Badge>
+                <span className="text-xs text-gray-400">Lista para descarga PDF</span>
+              </div>
+
+              <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
+                {title}
+              </h3>
+
+              <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                País: <strong>{country}</strong> · Trámite: <strong>{procedureLabel}</strong>
+                {hsCode ? (
+                  <>
+                    {' '}· HS/Producto: <strong>{hsCode}</strong>
+                  </>
+                ) : null}
+              </p>
             </div>
-            <div>
-              <h4 className="font-bold text-gray-900 mb-1">Costos</h4>
-              <p className="text-sm text-gray-700">{fees}</p>
-            </div>
+
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onDownloadPdf}
+              disabled={!manual}
+              className="w-full lg:w-auto"
+            >
+              Descargar PDF
+            </Button>
           </div>
+        </header>
 
-          {officialManual && (
-            <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-3">
-              <h4 className="font-bold text-green-800 mb-1">Guía oficial de usuario</h4>
-              <p className="text-sm text-gray-700">
-                <strong>{officialManual.label || 'Manual oficial'}</strong>
-              </p>
-              <p className="text-sm text-gray-700 mt-1">
-                Dependencia: {officialManual.agency || '—'}
-              </p>
-              {officialManual.notes ? (
-                <p className="text-sm text-gray-600 mt-1">{officialManual.notes}</p>
-              ) : null}
-              {officialManual.url ? (
-                <a
-                  href={officialManual.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-block mt-2 text-sm font-medium text-green-700 underline break-all"
-                >
-                  Abrir guía oficial
-                </a>
-              ) : null}
+        <div className="p-5 md:p-6 grid grid-cols-1 xl:grid-cols-12 gap-5">
+          <aside className="xl:col-span-4 space-y-5">
+            <Card className="p-5">
+              <h4 className="font-extrabold text-gray-900 mb-3">Requisitos</h4>
+
+              <ul className="space-y-2 text-sm text-gray-700">
+                {requirements.length > 0 ? (
+                  requirements.map((r, i) => (
+                    <li key={`req-${i}`} className="flex gap-2">
+                      <span className="text-green-600 font-bold">✓</span>
+                      <span>{typeof r === 'string' ? r : r?.label || 'Requisito no especificado'}</span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-gray-500">No disponibles (demo)</li>
+                )}
+              </ul>
+            </Card>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4">
+              <Card className="p-5">
+                <p className="text-xs text-gray-500">Autoridad</p>
+                <p className="text-sm font-bold text-gray-900 mt-1">{authority}</p>
+              </Card>
+
+              <Card className="p-5">
+                <p className="text-xs text-gray-500">Tiempos estimados</p>
+                <p className="text-sm font-bold text-gray-900 mt-1">{sla}</p>
+              </Card>
+
+              <Card className="p-5">
+                <p className="text-xs text-gray-500">Costos</p>
+                <p className="text-sm font-bold text-gray-900 mt-1">{fees}</p>
+              </Card>
             </div>
-          )}
-        </section>
 
-        <section className="md:col-span-2">
-          <h4 className="font-bold text-gray-900 mb-2">Pasos</h4>
+            {officialManual && (
+              <Card className="p-5 bg-green-50 border-green-100">
+                <Badge variant="success">Fuente oficial</Badge>
 
-          <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-700">
-            {steps.length > 0 ? (
-              steps.map((s, i) => (
-                <li key={`step-${i}`}>
-                  <span className="font-semibold">
-                    {s?.title || `Paso ${i + 1}`}:
-                  </span>{' '}
-                  <span>{s?.detail || 'Detalle no disponible'}</span>
-                </li>
-              ))
-            ) : (
-              <li>Sin pasos disponibles (demo)</li>
+                <h4 className="font-extrabold text-green-800 mt-3">
+                  Guía oficial de usuario
+                </h4>
+
+                <p className="text-sm text-gray-700 mt-2">
+                  <strong>{officialManual.label || 'Manual oficial'}</strong>
+                </p>
+
+                <p className="text-sm text-gray-700 mt-1">
+                  Dependencia: {officialManual.agency || '—'}
+                </p>
+
+                {officialManual.notes ? (
+                  <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                    {officialManual.notes}
+                  </p>
+                ) : null}
+
+                {officialManual.url ? (
+                  <a
+                    href={officialManual.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex mt-4 text-sm font-semibold text-green-700 underline break-all"
+                  >
+                    Abrir guía oficial →
+                  </a>
+                ) : null}
+              </Card>
             )}
-          </ol>
+          </aside>
 
-          <div className="mt-4">
-            <h4 className="font-bold text-gray-900 mb-2">Enlaces oficiales</h4>
+          <section className="xl:col-span-8 space-y-5">
+            <Card className="p-5 md:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+                <div>
+                  <h4 className="text-xl font-extrabold text-gray-900">
+                    Pasos del trámite
+                  </h4>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Sigue esta secuencia para avanzar de forma ordenada.
+                  </p>
+                </div>
 
-            <ul className="list-disc pl-5 space-y-1 text-sm text-blue-700">
-              {links.length > 0 ? (
-                links.map((l, i) => (
-                  <li key={`link-${i}`}>
+                <Badge variant="neutral">{steps.length || 0} pasos</Badge>
+              </div>
+
+              <div className="space-y-4">
+                {steps.length > 0 ? (
+                  steps.map((s, i) => (
+                    <div
+                      key={`step-${i}`}
+                      className="grid grid-cols-[44px_minmax(0,1fr)] gap-4 rounded-2xl border border-gray-100 bg-white p-4"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-extrabold">
+                        {i + 1}
+                      </div>
+
+                      <div>
+                        <h5 className="font-extrabold text-gray-900">
+                          {s?.title || `Paso ${i + 1}`}
+                        </h5>
+                        <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+                          {s?.detail || 'Detalle no disponible'}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">Sin pasos disponibles (demo)</p>
+                )}
+              </div>
+            </Card>
+
+            <Card className="p-5 md:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                  <h4 className="text-xl font-extrabold text-gray-900">
+                    Enlaces oficiales
+                  </h4>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Consulta siempre la fuente oficial antes de presentar el trámite.
+                  </p>
+                </div>
+
+                <Badge variant="neutral">{links.length || 0} enlaces</Badge>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {links.length > 0 ? (
+                  links.map((l, i) => (
                     <a
+                      key={`link-${i}`}
                       href={l?.url || '#'}
                       target="_blank"
                       rel="noreferrer"
-                      className="underline break-all"
+                      className="rounded-2xl border border-gray-100 bg-gray-50 hover:bg-green-50 hover:border-green-100 transition p-4"
                     >
-                      {l?.label || l?.url || 'Enlace oficial'}
+                      <p className="text-sm font-bold text-gray-900">
+                        {l?.label || 'Enlace oficial'}
+                      </p>
+                      <p className="text-xs text-green-700 underline break-all mt-1">
+                        {l?.url || '#'}
+                      </p>
                     </a>
-                  </li>
-                ))
-              ) : (
-                <li className="text-gray-700">Sin enlaces disponibles</li>
-              )}
-            </ul>
-          </div>
-
-          <div className="mt-5">
-            <button
-              type="button"
-              onClick={onDownloadPdf}
-              disabled={!manual}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg font-medium text-sm md:text-base bg-green-100 text-green-700 hover:bg-green-200 active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              Descargar PDF
-
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M8 12l4 4 4-4M12 16V4"
-                  stroke="#047857"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M20 20H4"
-                  stroke="#047857"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </div>
-        </section>
-      </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">Sin enlaces disponibles</p>
+                )}
+              </div>
+            </Card>
+          </section>
+        </div>
+      </Card>
     </article>
   );
 }
