@@ -1,46 +1,52 @@
 import React, { useState, useCallback } from 'react';
 import { supabase } from '../../supabaseClient';
+import { Button, Card, Badge, Input, Select, Alert, Loader, EmptyState } from '../ui';
 
 const AI_UPDATES_ENDPOINT =
   process.env.REACT_APP_AI_UPDATES_ENDPOINT ||
   'https://eaxaxvnfllukoflzuxcq.supabase.co/functions/v1/ai-updates';
 
-// ===== UI utils =====
-const Card = ({ title, subtitle, children, icon, footer }) => (
-  <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-    {(title || subtitle) && (
-      <div className="px-4 md:px-5 py-4 border-b border-gray-100 flex items-start gap-3">
-        {icon && <div className="text-green-600 mt-0.5">{icon}</div>}
-        <div>
-          <div className="text-base md:text-lg font-semibold text-gray-800">{title}</div>
-          {subtitle && <div className="text-sm text-gray-500 mt-0.5">{subtitle}</div>}
-        </div>
-      </div>
-    )}
-    <div className="p-4 md:p-5">{children}</div>
-    {footer && <div className="px-4 md:px-5 py-3 border-t border-gray-100">{footer}</div>}
-  </div>
-);
-
 const csvEscape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
 const downloadCSV = (rows, filename) => {
   if (!Array.isArray(rows) || rows.length === 0) return;
+
   const headers = Object.keys(rows[0]);
   const csv =
     headers.map(csvEscape).join(',') + '\n' +
     rows.map(r => headers.map(h => csvEscape(r[h])).join(',')).join('\n');
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+
   a.href = url;
   a.download = filename.endsWith('.csv') ? filename : `${filename}.csv`;
   a.click();
+
   URL.revokeObjectURL(url);
 };
 
+const ResultCard = ({ badge, title, emptyText, children }) => (
+  <Card className="p-5">
+    <div className="flex items-start justify-between gap-3 mb-4">
+      <div>
+        <Badge variant="success">{badge}</Badge>
+        <h4 className="text-lg font-extrabold text-gray-900 mt-3">
+          {title}
+        </h4>
+      </div>
+    </div>
+
+    {children || (
+      <p className="text-sm text-gray-500">
+        {emptyText}
+      </p>
+    )}
+  </Card>
+);
+
 const ActualizacionesTab = () => {
-  // ====== Panel IA de Tendencias/Regulaciones/Demanda/Oportunidades ======
   const [sector, setSector] = useState('');
   const [focusCountry, setFocusCountry] = useState('');
   const [horizon, setHorizon] = useState(6);
@@ -51,7 +57,7 @@ const ActualizacionesTab = () => {
     regulations: [],
     demand_signals: [],
     opportunities: [],
-    sources: []
+    sources: [],
   });
 
   const callAiUpdates = useCallback(async (payload) => {
@@ -62,32 +68,49 @@ const ActualizacionesTab = () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(jwt ? { 'Authorization': `Bearer ${jwt}` } : {}),
+        ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
       },
       body: JSON.stringify(payload),
     });
+
     const text = await res.text();
     let json = {};
-    try { json = JSON.parse(text); } catch {}
+
+    try {
+      json = JSON.parse(text);
+    } catch {}
+
     if (!res.ok) {
       throw new Error(json?.error || text || `HTTP ${res.status}`);
     }
+
     return json;
   }, []);
 
   const handleBriefing = useCallback(async () => {
     setAiErr('');
-    setAiData({ trends: [], regulations: [], demand_signals: [], opportunities: [], sources: [] });
+    setAiData({
+      trends: [],
+      regulations: [],
+      demand_signals: [],
+      opportunities: [],
+      sources: [],
+    });
 
     const s = String(sector || '').trim();
-    if (!s) { setAiErr('Indica un sector o fracción HS.'); return; }
+
+    if (!s) {
+      setAiErr('Indica un sector o fracción HS.');
+      return;
+    }
 
     try {
       setAiLoading(true);
+
       const out = await callAiUpdates({
         sector: s,
         focus_country: String(focusCountry || '').trim(),
-        horizon_months: Number(horizon) || 6
+        horizon_months: Number(horizon) || 6,
       });
 
       setAiData({
@@ -111,205 +134,348 @@ const ActualizacionesTab = () => {
       ...aiData.demand_signals.map(d => ({ type: 'demand_signal', ...d })),
       ...aiData.opportunities.map(o => ({ type: 'opportunity', ...o })),
     ];
+
     if (!rows.length) return;
+
     downloadCSV(rows, `briefing_IA_${(sector || 'sector').replace(/\s+/g, '_')}.csv`);
   }, [aiData, sector]);
 
-  return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-500 px-5 md:px-6 py-6">
-        <h2 className="text-white text-2xl md:text-3xl font-bold">Actualizaciones Mensuales</h2>
-        <p className="text-emerald-50 mt-1">
-          Tendencias, regulaciones y oportunidades clave del comercio internacional. Recibirás un resumen mensual directo a tu correo.
-        </p>
-      </div>
+  const hasResults =
+    aiData.trends.length ||
+    aiData.regulations.length ||
+    aiData.demand_signals.length ||
+    aiData.opportunities.length;
 
-      <div className="p-4 md:p-6 space-y-6">
-        {/* ==== Briefing IA ==== */}
-        <Card
-          title="Briefing IA de Mercado & Regulación"
-          subtitle="Genera un resumen por sector o fracción HS con señales recientes."
-          icon={<span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100">🤖</span>}
-          footer={
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>Consejo: prueba con HS (8 dígitos) o “sector agro (café)”.</span>
-              <button
-                onClick={exportAiCSV}
-                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg disabled:opacity-50"
-                disabled={
-                  !(
-                    aiData.trends.length ||
-                    aiData.regulations.length ||
-                    aiData.demand_signals.length ||
-                    aiData.opportunities.length
-                  )
-                }
-              >
-                Exportar CSV
-              </button>
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div className="xl:col-span-2">
+          <Card className="p-6 md:p-8 overflow-hidden relative">
+            <div className="absolute right-8 top-8 h-32 w-32 rounded-full bg-green-100 blur-2xl opacity-70" />
+
+            <div className="relative">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <Badge variant="success">Actualizaciones IA</Badge>
+                <span className="text-sm text-gray-500">
+                  Tendencias, regulación y oportunidades
+                </span>
+              </div>
+
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+                Briefing inteligente de mercado
+              </h2>
+
+              <p className="text-gray-600 mt-3 max-w-3xl leading-relaxed">
+                Genera un resumen accionable por sector, fracción HS o país foco.
+                Identifica tendencias, cambios regulatorios, señales de demanda y nuevas
+                oportunidades de comercio internacional.
+              </p>
             </div>
-          }
-        >
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="flex flex-col">
-              <label className="text-sm text-gray-700 mb-1">Sector o HS</label>
-              <input
-                type="text"
-                value={sector}
-                onChange={(e) => setSector(e.target.value)}
-                placeholder="Ej. 08044010 o “sector cacao”"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-5">
+          <Card className="p-5">
+            <p className="text-sm text-gray-500">Horizonte actual</p>
+            <h3 className="text-3xl font-extrabold text-green-700 mt-1">
+              {horizon}
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Meses de análisis configurados.
+            </p>
+          </Card>
+
+          <Card className="p-5 bg-green-50 border-green-100">
+            <p className="text-sm text-green-700 font-semibold">Exportable</p>
+            <h3 className="text-lg font-extrabold text-gray-900 mt-2">
+              CSV del briefing
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Descarga las señales generadas para análisis interno.
+            </p>
+          </Card>
+        </div>
+      </section>
+
+      {/* Briefing */}
+      <Card className="overflow-hidden">
+        <div className="p-5 md:p-6 border-b border-gray-100 bg-white">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <Badge variant="success">Briefing IA</Badge>
+                <span className="text-xs text-gray-400">
+                  Mercado · Regulación · Demanda · Oportunidades
+                </span>
+              </div>
+
+              <h3 className="text-2xl font-extrabold text-gray-900">
+                Mercado & Regulación
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-1 max-w-2xl">
+                Genera un resumen por sector o fracción HS con señales recientes y fuentes sugeridas.
+              </p>
             </div>
-            <div className="flex flex-col">
-              <label className="text-sm text-gray-700 mb-1">País foco (opcional)</label>
-              <input
-                type="text"
-                value={focusCountry}
-                onChange={(e) => setFocusCountry(e.target.value)}
-                placeholder="Ej. Estados Unidos"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm text-gray-700 mb-1">Horizonte</label>
-              <select
-                value={horizon}
-                onChange={(e) => setHorizon(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              >
-                <option value={3}>3 meses</option>
-                <option value={6}>6 meses</option>
-                <option value={12}>12 meses</option>
-              </select>
-            </div>
+
+            <Button
+              variant="outline"
+              onClick={exportAiCSV}
+              disabled={!hasResults}
+              className="w-full lg:w-auto"
+            >
+              Exportar CSV
+            </Button>
           </div>
-          <div className="mt-3">
-            <button
+        </div>
+
+        <div className="p-5 md:p-6">
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Input
+              label="Sector o HS"
+              type="text"
+              value={sector}
+              onChange={(e) => setSector(e.target.value)}
+              placeholder="Ej. 08044010 o sector cacao"
+            />
+
+            <Input
+              label="País foco"
+              type="text"
+              value={focusCountry}
+              onChange={(e) => setFocusCountry(e.target.value)}
+              placeholder="Ej. Estados Unidos"
+            />
+
+            <Select
+              label="Horizonte"
+              value={horizon}
+              onChange={(e) => setHorizon(e.target.value)}
+            >
+              <option value={3}>3 meses</option>
+              <option value={6}>6 meses</option>
+              <option value={12}>12 meses</option>
+            </Select>
+          </div>
+
+          <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl bg-gray-50 border border-gray-100 p-4">
+            <div>
+              <p className="text-sm font-bold text-gray-900">
+                Consejo de uso
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Prueba con HS de 8 dígitos o una búsqueda como “sector agro café”.
+              </p>
+            </div>
+
+            <Button
+              variant="secondary"
               onClick={handleBriefing}
-              className="h-[42px] px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm"
               disabled={aiLoading}
+              className="w-full sm:w-auto"
             >
               {aiLoading ? 'Consultando…' : 'Generar briefing IA'}
-            </button>
-            {aiErr && <div className="text-xs text-red-600 mt-2">{aiErr}</div>}
+            </Button>
           </div>
 
-          {/* Resultados */}
-          {(aiData.trends.length + aiData.regulations.length + aiData.demand_signals.length + aiData.opportunities.length > 0) ? (
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="p-3 rounded-lg border border-gray-100">
-                <div className="font-semibold text-gray-800 mb-2">Tendencias</div>
-                {aiData.trends.length === 0 ? (
-                  <div className="text-sm text-gray-500">Sin señales destacadas.</div>
-                ) : (
-                  <ul className="space-y-2 text-sm text-gray-700">
+          {aiErr && (
+            <div className="mt-4">
+              <Alert variant="danger">{aiErr}</Alert>
+            </div>
+          )}
+
+          {aiLoading && (
+            <div className="mt-5">
+              <Loader text="Generando briefing de mercado…" />
+            </div>
+          )}
+
+          {!aiLoading && !hasResults && !aiErr && (
+            <div className="mt-6">
+              <EmptyState
+                title="Aún no hay briefing generado"
+                description="Ingresa un sector o fracción HS y genera un resumen de tendencias, regulación, demanda y oportunidades."
+              />
+            </div>
+          )}
+
+          {hasResults ? (
+            <div className="mt-6 grid gap-5 md:grid-cols-2">
+              <ResultCard
+                badge="Tendencias"
+                title="Señales de mercado"
+                emptyText="Sin señales destacadas."
+              >
+                {aiData.trends.length > 0 ? (
+                  <ul className="space-y-4 text-sm text-gray-700">
                     {aiData.trends.map((t, i) => (
-                      <li key={`t-${i}`}>
-                        <div className="font-medium text-gray-800">{t.title}</div>
-                        <div className="text-gray-600">{t.summary}</div>
-                        <div className="text-[11px] text-gray-400 mt-1">
-                          {t.region ? `Región: ${t.region} · ` : ''}Horizonte: {t.timeframe || '—'}
-                        </div>
+                      <li key={`t-${i}`} className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+                        <h5 className="font-extrabold text-gray-900">
+                          {t.title}
+                        </h5>
+                        <p className="text-gray-600 mt-1 leading-relaxed">
+                          {t.summary}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          {t.region ? `Región: ${t.region} · ` : ''}
+                          Horizonte: {t.timeframe || '—'}
+                        </p>
                       </li>
                     ))}
                   </ul>
-                )}
-              </div>
+                ) : null}
+              </ResultCard>
 
-              <div className="p-3 rounded-lg border border-gray-100">
-                <div className="font-semibold text-gray-800 mb-2">Regulaciones</div>
-                {aiData.regulations.length === 0 ? (
-                  <div className="text-sm text-gray-500">Sin cambios relevantes.</div>
-                ) : (
-                  <ul className="space-y-2 text-sm text-gray-700">
+              <ResultCard
+                badge="Regulación"
+                title="Cambios normativos"
+                emptyText="Sin cambios relevantes."
+              >
+                {aiData.regulations.length > 0 ? (
+                  <ul className="space-y-4 text-sm text-gray-700">
                     {aiData.regulations.map((r, i) => (
-                      <li key={`r-${i}`}>
-                        <div className="font-medium text-gray-800">{r.jurisdiction}</div>
-                        <div className="text-gray-600">{r.change}</div>
-                        <div className="text-[11px] text-gray-400 mt-1">
-                          Vigencia: {r.effective_date || '—'} {r.link ? ' · ' : ''}
+                      <li key={`r-${i}`} className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+                        <h5 className="font-extrabold text-gray-900">
+                          {r.jurisdiction}
+                        </h5>
+                        <p className="text-gray-600 mt-1 leading-relaxed">
+                          {r.change}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          Vigencia: {r.effective_date || '—'}
+                          {r.link ? ' · ' : ''}
                           {r.link && (
-                            <a className="text-emerald-700 underline" href={r.link} target="_blank" rel="noreferrer">
+                            <a
+                              className="text-green-700 underline"
+                              href={r.link}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
                               fuente
                             </a>
                           )}
-                        </div>
+                        </p>
                       </li>
                     ))}
                   </ul>
-                )}
-              </div>
+                ) : null}
+              </ResultCard>
 
-              <div className="p-3 rounded-lg border border-gray-100">
-                <div className="font-semibold text-gray-800 mb-2">Señales de demanda</div>
-                {aiData.demand_signals.length === 0 ? (
-                  <div className="text-sm text-gray-500">Sin señales destacadas.</div>
-                ) : (
-                  <ul className="space-y-2 text-sm text-gray-700">
+              <ResultCard
+                badge="Demanda"
+                title="Señales de demanda"
+                emptyText="Sin señales destacadas."
+              >
+                {aiData.demand_signals.length > 0 ? (
+                  <ul className="space-y-4 text-sm text-gray-700">
                     {aiData.demand_signals.map((d, i) => (
-                      <li key={`d-${i}`}>
-                        <div className="font-medium text-gray-800">{d.market}</div>
-                        <div className="text-gray-600">{d.indicator}</div>
-                        <div className="text-[11px] text-gray-400 mt-1">Movimiento: {d.movement || '—'} · {d.note || ''}</div>
+                      <li key={`d-${i}`} className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+                        <h5 className="font-extrabold text-gray-900">
+                          {d.market}
+                        </h5>
+                        <p className="text-gray-600 mt-1 leading-relaxed">
+                          {d.indicator}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          Movimiento: {d.movement || '—'} · {d.note || ''}
+                        </p>
                       </li>
                     ))}
                   </ul>
-                )}
-              </div>
+                ) : null}
+              </ResultCard>
 
-              <div className="p-3 rounded-lg border border-gray-100">
-                <div className="font-semibold text-gray-800 mb-2">Oportunidades</div>
-                {aiData.opportunities.length === 0 ? (
-                  <div className="text-sm text-gray-500">Sin propuestas inmediatas.</div>
-                ) : (
-                  <ul className="space-y-2 text-sm text-gray-700">
+              <ResultCard
+                badge="Oportunidades"
+                title="Ideas accionables"
+                emptyText="Sin propuestas inmediatas."
+              >
+                {aiData.opportunities.length > 0 ? (
+                  <ul className="space-y-4 text-sm text-gray-700">
                     {aiData.opportunities.map((o, i) => (
-                      <li key={`o-${i}`}>
-                        <div className="font-medium text-gray-800">{o.idea}</div>
-                        <div className="text-gray-600">{o.rationale}</div>
-                        <div className="text-[11px] text-gray-400 mt-1">Sector: {o.sector || '—'} · Riesgo: {o.risk || '—'}</div>
+                      <li key={`o-${i}`} className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+                        <h5 className="font-extrabold text-gray-900">
+                          {o.idea}
+                        </h5>
+                        <p className="text-gray-600 mt-1 leading-relaxed">
+                          {o.rationale}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          Sector: {o.sector || '—'} · Riesgo: {o.risk || '—'}
+                        </p>
                       </li>
                     ))}
                   </ul>
-                )}
-              </div>
+                ) : null}
+              </ResultCard>
 
               {aiData.sources?.length > 0 && (
-                <div className="md:col-span-2 p-3 rounded-lg border border-gray-100">
-                  <div className="font-semibold text-gray-800 mb-2">Fuentes sugeridas</div>
-                  <ul className="list-disc pl-5 text-xs text-gray-600 space-y-1">
-                    {aiData.sources.map((s, i) => <li key={`src-${i}`}>{s}</li>)}
+                <Card className="p-5 md:col-span-2 bg-gray-50">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <Badge variant="neutral">Fuentes sugeridas</Badge>
+                    <span className="text-xs text-gray-400">
+                      Revisa siempre fuentes oficiales antes de tomar decisiones.
+                    </span>
+                  </div>
+
+                  <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
+                    {aiData.sources.map((s, i) => (
+                      <li key={`src-${i}`}>
+                        {s}
+                      </li>
+                    ))}
                   </ul>
-                </div>
+                </Card>
               )}
             </div>
-          ) : (
-            !aiLoading && <div className="text-sm text-gray-500 mt-3">Genera un briefing para ver resultados aquí.</div>
-          )}
-        </Card>
+          ) : null}
+        </div>
+      </Card>
 
-        {/* Info correo */}
-        <Card
-          title="Envío por correo"
-          subtitle="Recibirás el resumen mensual automáticamente."
-          icon={<span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100">✉️</span>}
-        >
-          <ul className="list-disc pl-5 text-sm text-gray-700 space-y-2">
-            <li>Se envía el primer día hábil de cada mes a tu correo registrado.</li>
-            <li>Incluye cambios normativos, mercados con mayor demanda y oportunidades por sector.</li>
-            <li>Si no lo ves, revisa spam o marca nuestro correo como seguro.</li>
-          </ul>
-          <div className="mt-4 text-xs text-gray-500">
-            Aqui encuentras Noticias Internacionales, con preferencias por categorías (agro, industria, servicios) y países de interés.
+      {/* Email info */}
+      <Card className="p-5 md:p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-green-100 text-green-700 flex items-center justify-center text-2xl">
+            ✉️
           </div>
-        </Card>
-      </div>
+
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <Badge variant="success">Envío por correo</Badge>
+              <span className="text-xs text-gray-400">
+                Resumen mensual automático
+              </span>
+            </div>
+
+            <h3 className="text-2xl font-extrabold text-gray-900">
+              Actualizaciones mensuales
+            </h3>
+
+            <ul className="mt-4 space-y-2 text-sm text-gray-700">
+              <li className="flex gap-2">
+                <span className="text-green-600 font-bold">✓</span>
+                <span>Se envía el primer día hábil de cada mes a tu correo registrado.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-green-600 font-bold">✓</span>
+                <span>Incluye cambios normativos, mercados con mayor demanda y oportunidades por sector.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-green-600 font-bold">✓</span>
+                <span>Si no lo ves, revisa spam o marca nuestro correo como seguro.</span>
+              </li>
+            </ul>
+
+            <p className="mt-4 text-xs text-gray-500">
+              Aquí encuentras noticias internacionales, con preferencias por categorías
+              como agro, industria, servicios y países de interés.
+            </p>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };
 
 export default ActualizacionesTab;
-
-
