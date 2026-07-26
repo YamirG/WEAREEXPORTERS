@@ -1,6 +1,7 @@
 // src/pages/LandingDiagnosticoExportador.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 import RegisterModal from "../components/RegisterModal";
 
 import {
@@ -10,6 +11,7 @@ import {
   isHSLike,
 } from "../services/consultaIA";
 
+const ADMIN_EMAIL = "yamirguillenr@gmail.com";
 const VIDEO_URL_DEFAULT = "https://youtu.be/bBUlYviB_7k";
 const FREE_DIAGNOSTIC_STORAGE_KEY =
   "weareexporters_free_diagnostic_used";
@@ -17,11 +19,14 @@ const FREE_DIAGNOSTIC_STORAGE_KEY =
 // Datos de contacto del footer. Sustituye únicamente el teléfono y enlaces
 // cuando tengas las URLs definitivas de tus redes sociales.
 const CONTACT_EMAIL = "somosexportadoresmx@gmail.com";
-const CONTACT_PHONE_DISPLAY = "+525574169768";
+const CONTACT_PHONE_DISPLAY = "+52 55 7416 9768";
+const CONTACT_PHONE_LINK = "+525574169768";
 
 const SOCIAL_LINKS = [
-  { name: "Facebook", href: "https://www.facebook.com/share/14cFVcB1kPz/" },
-
+  {
+    name: "Facebook",
+    href: "https://www.facebook.com/share/14cFVcB1kPz/",
+  },
 ];
 
 
@@ -149,6 +154,9 @@ function getYouTubeEmbed(url) {
 export default function LandingDiagnosticoExportador() {
   const navigate = useNavigate();
 
+  const [adminEmail, setAdminEmail] = useState("");
+  const [videoUrl, setVideoUrl] = useState(VIDEO_URL_DEFAULT);
+
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [showFreeLimitModal, setShowFreeLimitModal] =
@@ -178,9 +186,12 @@ export default function LandingDiagnosticoExportador() {
     useState(null);
 
   const embedSrc = useMemo(
-    () => getYouTubeEmbed(VIDEO_URL_DEFAULT),
-    []
+    () => getYouTubeEmbed(videoUrl),
+    [videoUrl]
   );
+
+  const isAdmin =
+    adminEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   const hsIsValid = isHSLike(hsCode);
 
@@ -197,22 +208,43 @@ export default function LandingDiagnosticoExportador() {
   }, [marketResult]);
 
   useEffect(() => {
-    // Siempre abre la landing desde el inicio, aunque el usuario
-    // llegue desde otra sección de la Home.
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "auto",
-    });
+    let isMounted = true;
 
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    const getUser = async () => {
+      try {
+        const { data, error } =
+          await supabase.auth.getUser();
+
+        if (error) {
+          console.warn(
+            "No se pudo verificar el usuario administrador:",
+            error
+          );
+
+          return;
+        }
+
+        if (isMounted) {
+          setAdminEmail(data?.user?.email || "");
+        }
+      } catch (error) {
+        console.warn(
+          "Error verificando usuario administrador:",
+          error
+        );
+      }
+    };
+
+    getUser();
 
     const timer = window.setTimeout(() => {
-      setShowDiagnostic(true);
+      if (isMounted) {
+        setShowDiagnostic(true);
+      }
     }, 60000);
 
     return () => {
+      isMounted = false;
       window.clearTimeout(timer);
     };
   }, []);
@@ -580,6 +612,10 @@ export default function LandingDiagnosticoExportador() {
       {/* Video */}
       <section className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 md:pt-10">
         <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:rounded-3xl sm:p-6">
+          {/* Panel administrativo oculto del sitio público.
+              Se conserva intacta la lógica relacionada para no afectar
+              ninguna otra función existente. */}
+
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 sm:rounded-3xl">
             {embedSrc ? (
               <div className="aspect-video w-full">
