@@ -1403,14 +1403,14 @@ export default function LandingDiagnosticoExportador() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               {[
-                "Consultas de mercados y productos",
-                "Requisitos por país",
-                "Prospección masiva",
-                "Capacitación especializada",
-                "Asesoría y soporte",
-                "Actualizaciones comerciales",
-                "Cartera digital",
-                "Nuevas funciones del panel",
+                  "Diagnósticos y consultas de mercados",
+                  "Requisitos de exportación e importación",
+                  "Compradores internacionales",
+                  "Prospección masiva",
+                  "IA especializada",
+                  "Capacitación",
+                  "Asesoría y soporte",
+                  "Actualizaciones y nuevas funciones",
               ].map((benefit) => (
                 <div
                   key={benefit}
