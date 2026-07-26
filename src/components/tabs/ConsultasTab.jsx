@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { supabase } from '../../supabaseClient';
+import { Button, Card, Badge, Input, Select, Alert, Loader, EmptyState } from '../ui';
 
 // (opcional) si quieres sobreescribir por .env:
 // REACT_APP_AI_CONSULTAS_ENDPOINT=https://TU-PROYECTO.supabase.co/functions/v1/ai-consultas
@@ -34,55 +35,62 @@ const downloadCSV = (rows, filename) => {
   URL.revokeObjectURL(url);
 };
 
-// Spinner minimalista
+// Spinner minimalista conservado por compatibilidad visual interna
 const Spinner = () => (
-  <svg className="h-4 w-4 animate-spin text-green-600" viewBox="0 0 24 24">
+  <svg className="h-4 w-4 animate-spin text-green-700" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
   </svg>
 );
 
-// Botón consistente
-const Button = ({ children, className = '', ...props }) => (
-  <button
-    className={
-      'h-[42px] inline-flex items-center gap-2 px-4 rounded-lg text-sm font-medium transition-colors ' +
-      'bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed ' +
-      className
-    }
-    {...props}
-  >
-    {children}
-  </button>
-);
+const FieldValidity = ({ value }) => {
+  if (!value) return null;
 
-// Botón secundario
-const ButtonSecondary = ({ children, className = '', ...props }) => (
-  <button
-    className={
-      'h-[42px] inline-flex items-center gap-2 px-4 rounded-lg text-sm font-medium transition-colors ' +
-      'bg-gray-100 hover:bg-gray-200 text-gray-800 ' +
-      className
-    }
-    {...props}
-  >
-    {children}
-  </button>
-);
+  return isHSLike(value) ? (
+    <Badge variant="success" className="mt-2">HS válido</Badge>
+  ) : (
+    <Badge variant="danger" className="mt-2">HS inválido</Badge>
+  );
+};
 
-// Tarjeta contenedora
-const Card = ({ title, subtitle, children, icon }) => (
-  <div className="bg-white rounded-xl shadow-md border border-gray-100">
-    {(title || subtitle) && (
-      <div className="px-4 md:px-5 py-4 border-b border-gray-100 flex items-start gap-3">
-        {icon && <div className="text-green-600 mt-0.5">{icon}</div>}
-        <div>
-          <div className="text-base md:text-lg font-semibold text-gray-800">{title}</div>
-          {subtitle && <div className="text-sm text-gray-500 mt-0.5">{subtitle}</div>}
+const PremiumModule = ({ number, icon, title, subtitle, children }) => (
+  <Card className="overflow-hidden">
+    <div className="px-5 md:px-6 py-5 border-b border-gray-100 bg-white">
+      <div className="flex items-start gap-4">
+        <div className="h-11 w-11 rounded-2xl bg-green-100 text-green-700 flex items-center justify-center text-xl shrink-0">
+          {icon}
+        </div>
+
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="success">Consulta {number}</Badge>
+            <span className="text-xs text-gray-400">IA especializada en exportación</span>
+          </div>
+
+          <h3 className="text-xl md:text-2xl font-extrabold text-gray-900 mt-2 leading-tight">
+            {title}
+          </h3>
+
+          {subtitle && (
+            <p className="text-sm md:text-base text-gray-500 mt-1 leading-relaxed">
+              {subtitle}
+            </p>
+          )}
         </div>
       </div>
-    )}
-    <div className="p-4 md:p-5">{children}</div>
+    </div>
+
+    <div className="p-5 md:p-6">
+      {children}
+    </div>
+  </Card>
+);
+
+const TableShell = ({ children }) => (
+  <div className="mt-5 overflow-hidden rounded-2xl border border-gray-200 bg-white">
+    <div className="overflow-x-auto">
+      {children}
+    </div>
   </div>
 );
 
@@ -239,296 +247,393 @@ const ConsultasTab = () => {
   // =======================
   if (loadingAccess) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center gap-2 text-gray-500 text-sm">
-          <Spinner /> <span>Verificando acceso premium…</span>
-        </div>
-      </div>
+      <Card className="p-6">
+        <Loader text="Verificando acceso premium…" />
+      </Card>
     );
   }
 
   if (!isPremium) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Consultas Premium</h2>
-        <p className="text-gray-600">
-          Esta sección está disponible solo para usuarios Premium. Actualiza tu plan para acceder a consultas avanzadas por fracción arancelaria.
-        </p>
-      </div>
+      <Card className="p-6 md:p-8">
+        <div className="max-w-2xl">
+          <Badge variant="warning">Acceso restringido</Badge>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mt-4">
+            Consultas Premium
+          </h2>
+          <p className="text-gray-600 mt-3 leading-relaxed">
+            Esta sección está disponible solo para usuarios Premium. Actualiza tu plan para acceder a consultas avanzadas por fracción arancelaria.
+          </p>
+        </div>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-      {/* Header con gradiente */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-500 px-5 md:px-6 py-6">
-        <h2 className="text-white text-2xl md:text-3xl font-bold">Consultas Ilimitadas (IA)</h2>
-        <p className="text-emerald-50 mt-1">
-          Ingresa tu fracción arancelaria (HS) para obtener <b>Top países consumidores</b>, <b>requisitos</b> y <b>directorio de compradores</b>.
-        </p>
-      </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div className="xl:col-span-2">
+          <Card className="p-6 md:p-8 overflow-hidden relative">
+            <div className="absolute right-8 top-8 h-32 w-32 rounded-full bg-green-100 blur-2xl opacity-70" />
 
-      <div className="p-4 md:p-6 space-y-8">
-        {/* Campo 1 */}
-        <Card
-          title="1) ¿Qué países consumen tu producto? (Top 10)"
-          subtitle="Basado en tendencias globales de importación por fracción HS."
-          icon={<span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100">🌍</span>}
-        >
-          <div className="grid gap-3 md:grid-cols-[1fr_auto_auto] items-end">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Fracción arancelaria (8 dígitos recomendado)
-              </label>
-              <input
-                type="text"
-                value={hs1}
-                onChange={(e) => setHs1(e.target.value.replace(/\s/g,''))}
-                placeholder="Ej. 08044010"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-              />
-              <div className="flex items-center gap-2 mt-1">
-                {hs1 ? (
-                  isHSLike(hs1)
-                    ? <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">HS válido</span>
-                    : <span className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">HS inválido</span>
-                ) : null}
+            <div className="relative">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <Badge variant="success">Consultas IA</Badge>
+                <span className="text-sm text-gray-500">Análisis por fracción arancelaria</span>
               </div>
+
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+                Inteligencia para exportar con claridad
+              </h2>
+
+              <p className="text-gray-600 mt-3 max-w-3xl leading-relaxed">
+                Ingresa tu fracción arancelaria HS para identificar países con demanda,
+                requisitos de exportación/importación y empresas compradoras potenciales.
+              </p>
             </div>
+          </Card>
+        </div>
 
-            <Button onClick={handleTopConsumers} disabled={topLoading || !hs1}>
-              {topLoading ? <><Spinner /> Consultando…</> : <>Analizar</>}
-            </Button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-5">
+          <Card className="p-5">
+            <p className="text-sm text-gray-500">Módulos disponibles</p>
+            <h3 className="text-3xl font-extrabold text-green-700 mt-1">3</h3>
+            <p className="text-sm text-gray-500 mt-1">Mercado, requisitos y compradores.</p>
+          </Card>
 
-            {!!topRows.length && (
-              <ButtonSecondary onClick={() => downloadCSV(topRows, `top_consumers_${hs1}.csv`)}>
-                Descargar CSV
-              </ButtonSecondary>
-            )}
+          <Card className="p-5 bg-green-50 border-green-100">
+            <p className="text-sm text-green-700 font-semibold">Recomendación</p>
+            <h3 className="text-lg font-extrabold text-gray-900 mt-2">
+              Usa HS de 8 dígitos
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Entre más precisa sea la fracción, mejores serán los resultados.
+            </p>
+          </Card>
+        </div>
+      </section>
+
+      {/* Consulta 1 */}
+      <PremiumModule
+        number="1"
+        icon="🌍"
+        title="¿Qué países consumen tu producto?"
+        subtitle="Top 10 de países consumidores basado en tendencias globales de importación por fracción HS."
+      >
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto_auto] items-end">
+          <div>
+            <Input
+              label="Fracción arancelaria HS"
+              type="text"
+              value={hs1}
+              onChange={(e) => setHs1(e.target.value.replace(/\s/g,''))}
+              placeholder="Ej. 08044010"
+            />
+            <FieldValidity value={hs1} />
           </div>
 
-          {topError && <p className="text-sm text-red-600 mt-3">{topError}</p>}
+          <Button
+            variant="secondary"
+            onClick={handleTopConsumers}
+            disabled={topLoading || !hs1}
+            className="w-full lg:w-auto"
+          >
+            {topLoading ? <><Spinner /> Consultando…</> : <>Analizar</>}
+          </Button>
 
-          {!topLoading && !topError && topRows.length === 0 && hs1 && isHSLike(hs1) && (
-            <div className="mt-4 text-sm text-gray-500">Sin resultados directos por ahora. Prueba con otra subpartida o revisa “Capacitación”.</div>
+          {!!topRows.length && (
+            <Button
+              variant="outline"
+              onClick={() => downloadCSV(topRows, `top_consumers_${hs1}.csv`)}
+              className="w-full lg:w-auto"
+            >
+              Descargar CSV
+            </Button>
           )}
+        </div>
 
-          {topLoading ? (
-            <div className="mt-4 flex items-center gap-2 text-sm text-gray-500"><Spinner /> Consultando…</div>
-          ) : !!topRows.length && (
-            <div className="overflow-x-auto mt-4">
+        {topError && (
+          <div className="mt-4">
+            <Alert variant="danger">{topError}</Alert>
+          </div>
+        )}
+
+        {!topLoading && !topError && topRows.length === 0 && hs1 && isHSLike(hs1) && (
+          <div className="mt-5">
+            <EmptyState
+              title="Sin resultados directos por ahora"
+              description="Prueba con otra subpartida o revisa Capacitación para afinar tu consulta."
+            />
+          </div>
+        )}
+
+        {topLoading ? (
+          <div className="mt-5">
+            <Loader text="Consultando países consumidores…" />
+          </div>
+        ) : !!topRows.length && (
+          <TableShell>
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">País</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">Importaciones (USD)</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">Participación</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">Notas</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {topRows.map((r, i) => (
+                  <tr key={i} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-5 py-3 text-sm font-semibold text-gray-900">{r.country}</td>
+                    <td className="px-5 py-3 text-sm text-gray-700">{r.import_value}</td>
+                    <td className="px-5 py-3 text-sm text-gray-700">{r.share}</td>
+                    <td className="px-5 py-3 text-sm text-gray-600">{r.notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableShell>
+        )}
+      </PremiumModule>
+
+      {/* Consulta 2 */}
+      <PremiumModule
+        number="2"
+        icon="📦"
+        title="Requisitos para exportar/importar"
+        subtitle="Documentos, permisos, regulaciones no arancelarias y requisitos según país de origen y destino."
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <Input
+              label="Fracción arancelaria HS"
+              type="text"
+              value={hs2}
+              onChange={(e) => setHs2(e.target.value.replace(/\s/g,''))}
+              placeholder="Ej. 08044010"
+            />
+            <FieldValidity value={hs2} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select
+              label="País de origen"
+              value={origin2}
+              onChange={(e) => setOrigin2(e.target.value)}
+            >
+              {COUNTRY_LIST.map((c) => <option key={`o-${c}`} value={c}>{c}</option>)}
+            </Select>
+
+            <Select
+              label="País destino"
+              value={dest2}
+              onChange={(e) => setDest2(e.target.value)}
+            >
+              {COUNTRY_LIST.map((c) => <option key={`d-${c}`} value={c}>{c}</option>)}
+            </Select>
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <Button
+            variant="secondary"
+            onClick={handleRequirements}
+            disabled={reqLoading || !hs2}
+            className="w-full sm:w-auto"
+          >
+            {reqLoading ? <><Spinner /> Consultando…</> : <>Consultar requisitos</>}
+          </Button>
+        </div>
+
+        {reqError && (
+          <div className="mt-4">
+            <Alert variant="danger">{reqError}</Alert>
+          </div>
+        )}
+
+        {!reqLoading && !reqError && (reqData.export_requirements.length + reqData.import_requirements.length + reqData.nTM.length) === 0 && hs2 && isHSLike(hs2) && (
+          <div className="mt-5">
+            <EmptyState
+              title="Sin resultados directos por ahora"
+              description="Revisa Capacitación para afinar tu consulta o prueba con otra fracción arancelaria."
+            />
+          </div>
+        )}
+
+        {reqLoading ? (
+          <div className="mt-5">
+            <Loader text="Consultando requisitos comerciales…" />
+          </div>
+        ) : (reqData.export_requirements.length + reqData.import_requirements.length + reqData.nTM.length > 0) && (
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card className="p-5">
+              <Badge variant="success">Exportación</Badge>
+              <h4 className="font-extrabold text-gray-900 mt-3 mb-3">
+                Salida del país de origen
+              </h4>
+              <ul className="space-y-2 text-sm text-gray-700">
+                {reqData.export_requirements.map((r, i) => (
+                  <li key={`ex-${i}`} className="flex gap-2">
+                    <span className="text-green-600">✓</span>
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+
+            <Card className="p-5">
+              <Badge variant="success">Importación</Badge>
+              <h4 className="font-extrabold text-gray-900 mt-3 mb-3">
+                Entrada al país destino
+              </h4>
+              <ul className="space-y-2 text-sm text-gray-700">
+                {reqData.import_requirements.map((r, i) => (
+                  <li key={`im-${i}`} className="flex gap-2">
+                    <span className="text-green-600">✓</span>
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+
+            <Card className="p-5">
+              <Badge variant="neutral">RNAS / NTMs</Badge>
+              <h4 className="font-extrabold text-gray-900 mt-3 mb-3">
+                Regulaciones no arancelarias
+              </h4>
+              <ul className="space-y-2 text-sm text-gray-700">
+                {reqData.nTM.map((r, i) => (
+                  <li key={`ntm-${i}`} className="flex gap-2">
+                    <span className="text-green-600">•</span>
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+
+            {reqData.references?.length > 0 && (
+              <Card className="p-5 lg:col-span-3 bg-gray-50">
+                <h4 className="font-extrabold text-gray-900 mb-3">
+                  Referencias / fuentes sugeridas
+                </h4>
+                <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
+                  {reqData.references.map((r, i) => <li key={`ref-${i}`}>{r}</li>)}
+                </ul>
+              </Card>
+            )}
+          </div>
+        )}
+      </PremiumModule>
+
+      {/* Consulta 3 */}
+      <PremiumModule
+        number="3"
+        icon="🏢"
+        title="¿Quién ya esta vendiendo un producto como el tuyo?"
+        subtitle="Top 10 de empresas importadoras afines a tu producto por país destino."
+      >
+        <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto_auto] items-end">
+          <div>
+            <Input
+              label="Fracción arancelaria HS"
+              type="text"
+              value={hs3}
+              onChange={(e) => setHs3(e.target.value.replace(/\s/g,''))}
+              placeholder="Ej. 08044010"
+            />
+            <FieldValidity value={hs3} />
+          </div>
+
+          <Select
+            label="País destino"
+            value={dest3}
+            onChange={(e) => setDest3(e.target.value)}
+          >
+            {COUNTRY_LIST.map((c) => <option key={`bd-${c}`} value={c}>{c}</option>)}
+          </Select>
+
+          <Button
+            variant="secondary"
+            onClick={handleBuyers}
+            disabled={buyersLoading || !hs3}
+            className="w-full lg:w-auto"
+          >
+            {buyersLoading ? <><Spinner /> Buscando…</> : <>Buscar empresas</>}
+          </Button>
+
+          {!!buyers.length && (
+            <Button
+              variant="outline"
+              onClick={() => downloadCSV(buyers, `buyers_${hs3}_${dest3}.csv`)}
+              className="w-full lg:w-auto"
+            >
+              Descargar CSV
+            </Button>
+          )}
+        </div>
+
+        {buyersError && (
+          <div className="mt-4">
+            <Alert variant="danger">{buyersError}</Alert>
+          </div>
+        )}
+
+        {!buyersLoading && !buyersError && buyers.length === 0 && hs3 && isHSLike(hs3) && (
+          <div className="mt-5">
+            <EmptyState
+              title="Sin resultados directos por ahora"
+              description="Prueba un destino alterno o ve a Prospección Masiva para contactar a escala."
+            />
+          </div>
+        )}
+
+        {buyersLoading ? (
+          <div className="mt-5">
+            <Loader text="Buscando empresas importadoras…" />
+          </div>
+        ) : !!buyers.length && (
+          <>
+            <TableShell>
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">País</th>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Importaciones (USD)</th>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Participación</th>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Notas</th>
+                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">Empresa</th>
+                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">Contacto</th>
+                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">Website</th>
+                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">Ciudad</th>
+                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">País</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
-                  {topRows.map((r, i) => (
-                    <tr key={i} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 text-sm">{r.country}</td>
-                      <td className="px-4 py-2 text-sm">{r.import_value}</td>
-                      <td className="px-4 py-2 text-sm">{r.share}</td>
-                      <td className="px-4 py-2 text-sm">{r.notes}</td>
+                  {buyers.map((b, i) => (
+                    <tr key={i} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-5 py-3 text-sm font-semibold text-gray-900">{b.company}</td>
+                      <td className="px-5 py-3 text-sm text-gray-700">{b.contact}</td>
+                      <td className="px-5 py-3 text-sm">
+                        {b.website ? (
+                          <a href={b.website} target="_blank" rel="noreferrer" className="text-green-700 underline break-all">
+                            {b.website}
+                          </a>
+                        ) : ''}
+                      </td>
+                      <td className="px-5 py-3 text-sm text-gray-700">{b.city}</td>
+                      <td className="px-5 py-3 text-sm text-gray-700">{b.country}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
-          )}
-        </Card>
+            </TableShell>
 
-        {/* Campo 2 */}
-        <Card
-          title="2) Requisitos para exportar/importar"
-          subtitle="Documentos, permisos y NTMs (por origen/destino)."
-          icon={<span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100">📦</span>}
-        >
-          <div className="grid gap-3 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fracción arancelaria (HS)</label>
-              <input
-                type="text"
-                value={hs2}
-                onChange={(e) => setHs2(e.target.value.replace(/\s/g,''))}
-                placeholder="Ej. 08044010"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-              />
-              <div className="mt-1">
-                {hs2 ? (
-                  isHSLike(hs2)
-                    ? <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">HS válido</span>
-                    : <span className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">HS inválido</span>
-                ) : null}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">País de origen</label>
-                <select
-                  value={origin2}
-                  onChange={(e) => setOrigin2(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-                >
-                  {COUNTRY_LIST.map((c) => <option key={`o-${c}`} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">País destino</label>
-                <select
-                  value={dest2}
-                  onChange={(e) => setDest2(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-                >
-                  {COUNTRY_LIST.map((c) => <option key={`d-${c}`} value={c}>{c}</option>)}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <Button onClick={handleRequirements} disabled={reqLoading || !hs2}>
-              {reqLoading ? <><Spinner /> Consultando…</> : <>Consultar requisitos</>}
-            </Button>
-          </div>
-
-          {reqError && <p className="text-sm text-red-600 mt-3">{reqError}</p>}
-
-          {!reqLoading && !reqError && (reqData.export_requirements.length + reqData.import_requirements.length + reqData.nTM.length) === 0 && hs2 && isHSLike(hs2) && (
-            <div className="mt-4 text-sm text-gray-500">Sin resultados directos por ahora. Revisa “Capacitación” para afinar tu consulta.</div>
-          )}
-
-          {reqLoading ? (
-            <div className="mt-4 flex items-center gap-2 text-sm text-gray-500"><Spinner /> Consultando…</div>
-          ) : (reqData.export_requirements.length + reqData.import_requirements.length + reqData.nTM.length > 0) && (
-            <div className="mt-5 space-y-5">
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-1">Salida del país de origen (exportación)</h4>
-                <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-                  {reqData.export_requirements.map((r, i) => <li key={`ex-${i}`}>{r}</li>)}
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-1">Entrada al país destino (importación)</h4>
-                <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-                  {reqData.import_requirements.map((r, i) => <li key={`im-${i}`}>{r}</li>)}
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-1">Regulaciones No Arancelarias (RNAS/NTMs) - destino</h4>
-                <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-                  {reqData.nTM.map((r, i) => <li key={`ntm-${i}`}>{r}</li>)}
-                </ul>
-              </div>
-              {reqData.references?.length > 0 && (
-                <div className="text-xs text-gray-500">
-                  <div className="font-semibold mb-1">Referencias / fuentes sugeridas</div>
-                  <ul className="list-disc pl-5 space-y-0.5">
-                    {reqData.references.map((r, i) => <li key={`ref-${i}`}>{r}</li>)}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-        </Card>
-
-        {/* Campo 3 */}
-        <Card
-          title="3) ¿A quién venderle? (Top 10)"
-          subtitle="Empresas importadoras afines a tu producto por país destino."
-          icon={<span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100">🏢</span>}
-        >
-          <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto] items-end">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fracción arancelaria (HS)</label>
-              <input
-                type="text"
-                value={hs3}
-                onChange={(e) => setHs3(e.target.value.replace(/\s/g,''))}
-                placeholder="Ej. 08044010"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-              />
-              <div className="mt-1">
-                {hs3 ? (
-                  isHSLike(hs3)
-                    ? <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">HS válido</span>
-                    : <span className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">HS inválido</span>
-                ) : null}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">País destino</label>
-              <select
-                value={dest3}
-                onChange={(e) => setDest3(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-green-500 focus:outline-none"
-              >
-                {COUNTRY_LIST.map((c) => <option key={`bd-${c}`} value={c}>{c}</option>)}
-              </select>
-            </div>
-
-            <Button onClick={handleBuyers} disabled={buyersLoading || !hs3}>
-              {buyersLoading ? <><Spinner /> Buscando…</> : <>Buscar empresas</>}
-            </Button>
-
-            {!!buyers.length && (
-              <ButtonSecondary onClick={() => downloadCSV(buyers, `buyers_${hs3}_${dest3}.csv`)}>
-                Descargar CSV
-              </ButtonSecondary>
-            )}
-          </div>
-
-          {buyersError && <p className="text-sm text-red-600 mt-3">{buyersError}</p>}
-
-          {!buyersLoading && !buyersError && buyers.length === 0 && hs3 && isHSLike(hs3) && (
-            <div className="mt-4 text-sm text-gray-500">Sin resultados directos por ahora. Prueba un destino alterno o ve a “Prospección Masiva”.</div>
-          )}
-
-          {buyersLoading ? (
-            <div className="mt-4 flex items-center gap-2 text-sm text-gray-500"><Spinner /> Consultando…</div>
-          ) : !!buyers.length && (
-            <>
-              <div className="overflow-x-auto mt-4 mb-2">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Empresa</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Contacto</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Website</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Ciudad</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">País</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
-                    {buyers.map((b, i) => (
-                      <tr key={i} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 text-sm">{b.company}</td>
-                        <td className="px-4 py-2 text-sm">{b.contact}</td>
-                        <td className="px-4 py-2 text-sm">
-                          {b.website ? (
-                            <a href={b.website} target="_blank" rel="noreferrer" className="text-green-700 underline">
-                              {b.website}
-                            </a>
-                          ) : ''}
-                        </td>
-                        <td className="px-4 py-2 text-sm">{b.city}</td>
-                        <td className="px-4 py-2 text-sm">{b.country}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="text-sm text-gray-600">
+            <div className="mt-4">
+              <Alert variant="success">
                 💡 Siguiente paso recomendado: ve a la pestaña <b>Prospección Masiva</b> para contactar a gran escala.
-              </div>
-            </>
-          )}
-        </Card>
-      </div>
+              </Alert>
+            </div>
+          </>
+        )}
+      </PremiumModule>
     </div>
   );
 };
